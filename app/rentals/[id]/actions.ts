@@ -47,7 +47,7 @@ export async function sendInvoiceEmail(rentalId: string) {
   }
 
   const resend = getResend();
-  await resend.emails.send({
+  const { data: sendData, error: sendError } = await resend.emails.send({
     from: FROM_EMAIL,
     to: rental.renters.email,
     subject: `Invoice ${invoiceNumber} — Trailer ${rental.trailers.vin}`,
@@ -59,6 +59,15 @@ export async function sendInvoiceEmail(rentalId: string) {
       },
     ],
   });
+
+  if (sendError) {
+    // Resend returns {error} instead of throwing — surface it so the UI
+    // doesn't show "Invoice sent" when it wasn't.
+    throw new Error(`Resend rejected the email: ${sendError.message || JSON.stringify(sendError)}`);
+  }
+  if (!sendData?.id) {
+    throw new Error("Resend did not confirm the email was sent. Check your RESEND_API_KEY and INVOICE_FROM_EMAIL.");
+  }
 
   await supabase.from("invoices").insert({
     rental_id: rentalId,
