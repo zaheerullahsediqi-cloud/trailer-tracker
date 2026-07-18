@@ -19,7 +19,7 @@ export default function RenterRow({ renter }: { renter: any }) {
           setEditing(false);
           router.refresh();
         }}
-        className="card p-4 grid sm:grid-cols-2 gap-3"
+        className="card p-5 grid sm:grid-cols-2 gap-3"
       >
         <div className="sm:col-span-2">
           <label className="label">Full name</label>

@@ -17,10 +17,10 @@ export default async function RentalsPage() {
     <div className="space-y-8">
       <div>
         <p className="eyebrow">Agreements</p>
-        <h1 className="page-title">Rentals</h1>
+        <h1 className="page-title mt-1">Rentals</h1>
       </div>
 
-      <form action={createRental} className="card p-4 grid sm:grid-cols-2 gap-4">
+      <form action={createRental} className="card p-5 grid sm:grid-cols-2 gap-4">
         <div>
           <label className="label">Trailer</label>
           <select name="trailer_id" required className="input">
@@ -56,10 +56,14 @@ export default async function RentalsPage() {
           <input name="security_deposit_amount" type="number" step="0.01" defaultValue="0" className="input" />
         </div>
         <div>
+          <label className="label">Down payment ($)</label>
+          <input name="down_payment_amount" type="number" step="0.01" defaultValue="0" className="input" />
+        </div>
+        <div>
           <label className="label">Billing period</label>
-          <select name="period" className="input" id="period-select">
+          <select name="period" className="input" defaultValue="monthly">
             <option value="weekly">Weekly</option>
-            <option value="monthly" selected>Monthly</option>
+            <option value="monthly">Monthly</option>
             <option value="custom">Custom (days)</option>
           </select>
         </div>
@@ -71,7 +75,7 @@ export default async function RentalsPage() {
           <p className="text-xs text-muted mb-2">
             No trailer or renter listed? Add them on the{" "}
             <Link href="/trailers" className="text-accent underline">Trailers</Link> or{" "}
-            <Link href="/renters" className="text-accent underline">Renters</Link> page first.
+            <Link href="/renters" className="text-accent underline">Customers</Link> page first.
           </p>
           <button className="btn-primary">Create rental</button>
         </div>

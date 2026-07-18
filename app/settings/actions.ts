@@ -42,7 +42,5 @@ export async function updateCompanyLogo(logoUrl: string | null) {
     .update({ logo_url: logoUrl, updated_at: new Date().toISOString() })
     .eq("id", id);
   if (error) throw new Error(error.message);
-  // The logo shows in the sidebar on every page, so bust the whole layout.
   revalidatePath("/", "layout");
 }
-

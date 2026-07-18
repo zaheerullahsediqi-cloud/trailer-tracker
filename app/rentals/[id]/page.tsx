@@ -5,6 +5,7 @@ import InvoiceActions from "./invoice-actions";
 import RentalControls from "./rental-controls";
 import RentalTermsEdit from "./rental-terms-edit";
 import SecurityDepositEdit from "./security-deposit-edit";
+import DownPaymentEdit from "./down-payment-edit";
 
 export default async function RentalDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -56,7 +57,10 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
         <RentalTermsEdit rental={rental} />
       </div>
 
-      <SecurityDepositEdit rental={rental} />
+      <div className="grid sm:grid-cols-2 gap-4">
+        <SecurityDepositEdit rental={rental} />
+        <DownPaymentEdit rental={rental} />
+      </div>
 
       <div className="card p-5">
         <p className="eyebrow mb-3">Contract</p>

@@ -18,7 +18,7 @@ export default function RentalTermsEdit({ rental }: { rental: any }) {
           setEditing(false);
           router.refresh();
         }}
-        className="card p-4 space-y-3"
+        className="card p-5 space-y-3"
       >
         <p className="eyebrow mb-1">Edit rental terms</p>
         <div>
@@ -83,7 +83,7 @@ export default function RentalTermsEdit({ rental }: { rental: any }) {
   }
 
   return (
-    <div className="card p-4">
+    <div className="card p-5">
       <div className="flex items-center justify-between mb-2">
         <p className="eyebrow">Rental terms</p>
         <button className="btn-secondary text-xs" onClick={() => setEditing(true)}>

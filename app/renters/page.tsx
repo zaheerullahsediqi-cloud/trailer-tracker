@@ -13,10 +13,10 @@ export default async function RentersPage() {
     <div className="space-y-8">
       <div>
         <p className="eyebrow">Contacts</p>
-        <h1 className="page-title">Renters</h1>
+        <h1 className="page-title mt-1">Customers</h1>
       </div>
 
-      <form action={addRenter} className="card p-4 grid sm:grid-cols-2 gap-4">
+      <form action={addRenter} className="card p-5 grid sm:grid-cols-2 gap-4">
         <div className="sm:col-span-2">
           <label className="label">Full name</label>
           <input name="name" required className="input" />
@@ -34,7 +34,7 @@ export default async function RentersPage() {
           <input name="address" className="input" />
         </div>
         <div className="sm:col-span-2">
-          <button className="btn-primary">Add renter</button>
+          <button className="btn-primary">Add customer</button>
         </div>
       </form>
 
@@ -43,7 +43,7 @@ export default async function RentersPage() {
           <RenterRow key={r.id} renter={r} />
         ))}
         {(!renters || renters.length === 0) && (
-          <p className="text-muted">No renters yet. Add your first one above.</p>
+          <p className="text-muted text-sm">No customers yet. Add your first one above.</p>
         )}
       </div>
     </div>

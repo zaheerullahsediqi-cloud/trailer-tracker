@@ -34,7 +34,6 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
     .filter((r: any) => r.status === "active" && daysUntil(r.next_due_date) < 0)
     .reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
 
-  // Documents = contract PDFs across all rentals for this customer
   const contractRentals = list.filter((r: any) => r.contract_url);
   const documents = await Promise.all(
     contractRentals.map(async (r: any) => {
@@ -43,7 +42,6 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
     })
   );
 
-  // Timeline = rental starts + invoices sent, merged and sorted
   const timeline = [
     ...list.map((r: any) => ({
       type: "rental_start" as const,

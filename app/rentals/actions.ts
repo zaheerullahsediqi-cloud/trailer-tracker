@@ -17,10 +17,11 @@ export async function createRental(formData: FormData) {
   const period = String(formData.get("period"));
   const customDays = Number(formData.get("custom_days") || 0);
   const rate = Number(formData.get("rate") || 0);
+  const security_deposit_amount = Number(formData.get("security_deposit_amount") || 0);
+  const down_payment_amount = Number(formData.get("down_payment_amount") || 0);
 
   const period_days = periodToDays(period, customDays);
   const next_due_date = advanceByPeriod(start_date, period, period_days);
-  const security_deposit_amount = Number(formData.get("security_deposit_amount") || 0);
 
   const { error } = await supabase.from("rentals").insert({
     trailer_id,
@@ -33,6 +34,8 @@ export async function createRental(formData: FormData) {
     status: "active",
     security_deposit_amount,
     security_deposit_status: "held",
+    down_payment_amount,
+    down_payment_status: "not_collected",
   });
   if (error) throw new Error(error.message);
   revalidatePath("/rentals");
@@ -53,6 +56,27 @@ export async function updateSecurityDeposit(id: string, formData: FormData) {
       security_deposit_status,
       security_deposit_returned_amount,
       security_deposit_returned_date,
+    })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/rentals/${id}`);
+}
+
+export async function updateDownPayment(id: string, formData: FormData) {
+  const supabase = createClient();
+  const down_payment_amount = Number(formData.get("down_payment_amount") || 0);
+  const down_payment_status = String(formData.get("down_payment_status"));
+  const down_payment_collected_amount = Number(formData.get("down_payment_collected_amount") || 0);
+  const collectedDateRaw = String(formData.get("down_payment_collected_date") || "");
+  const down_payment_collected_date = collectedDateRaw || null;
+
+  const { error } = await supabase
+    .from("rentals")
+    .update({
+      down_payment_amount,
+      down_payment_status,
+      down_payment_collected_amount,
+      down_payment_collected_date,
     })
     .eq("id", id);
   if (error) throw new Error(error.message);

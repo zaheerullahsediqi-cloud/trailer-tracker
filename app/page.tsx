@@ -48,16 +48,8 @@ export default async function Dashboard() {
   const occupancyRate = totalTrailers > 0 ? Math.round((rentedTrailerIds.size / totalTrailers) * 100) : 0;
   const monthlyRevenue = list.reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
   const outstandingBalance = overdue.reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
-  // "Upcoming Due" = every active rental that isn't overdue yet (due soon + further out),
-  // not just the narrow 0-5 day window — that window is still shown separately below.
-  const upcomingDueAmount = [...dueSoon, ...upcoming].reduce(
-    (sum: number, r: any) => sum + Number(r.rate || 0),
-    0
-  );
+  const upcomingDueAmount = dueSoon.reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
 
-  // Build last-6-months revenue series from real invoice sends.
-  // Bucketed in UTC throughout so a send near a month boundary can't land
-  // in the wrong bucket depending on the viewer's local timezone.
   const nowUtc = new Date();
   const months: { key: string; month: string; revenue: number }[] = [];
   for (let i = 5; i >= 0; i--) {
@@ -79,18 +71,8 @@ export default async function Dashboard() {
   });
 
   const stats = [
-    {
-      label: "Total Trailers",
-      value: totalTrailers,
-      icon: Truck,
-      tint: "bg-accent/10 text-accent",
-    },
-    {
-      label: "Active Rentals",
-      value: activeRentalCount,
-      icon: FileCheck,
-      tint: "bg-success/10 text-success",
-    },
+    { label: "Total Trailers", value: totalTrailers, icon: Truck, tint: "bg-accent/10 text-accent" },
+    { label: "Active Rentals", value: activeRentalCount, icon: FileCheck, tint: "bg-success/10 text-success" },
     {
       label: "Monthly Revenue",
       value: `$${monthlyRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
@@ -109,24 +91,9 @@ export default async function Dashboard() {
       icon: Clock,
       tint: "bg-warning/10 text-warning",
     },
-    {
-      label: "Late Payments",
-      value: overdue.length,
-      icon: AlertTriangle,
-      tint: "bg-danger/10 text-danger",
-    },
-    {
-      label: "Available Trailers",
-      value: availableTrailers,
-      icon: PackageCheck,
-      tint: "bg-success/10 text-success",
-    },
-    {
-      label: "Occupancy Rate",
-      value: `${occupancyRate}%`,
-      icon: Gauge,
-      tint: "bg-accent/10 text-accent",
-    },
+    { label: "Late Payments", value: overdue.length, icon: AlertTriangle, tint: "bg-danger/10 text-danger" },
+    { label: "Available Trailers", value: availableTrailers, icon: PackageCheck, tint: "bg-success/10 text-success" },
+    { label: "Occupancy Rate", value: `${occupancyRate}%`, icon: Gauge, tint: "bg-accent/10 text-accent" },
   ];
 
   return (
@@ -136,7 +103,6 @@ export default async function Dashboard() {
         <h1 className="page-title mt-1">Dashboard</h1>
       </div>
 
-      {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => {
           const Icon = s.icon;
@@ -154,7 +120,6 @@ export default async function Dashboard() {
         })}
       </div>
 
-      {/* Revenue chart */}
       <div className="card p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -165,7 +130,6 @@ export default async function Dashboard() {
         <RevenueChart data={months} />
       </div>
 
-      {/* Activity sections */}
       <div className="space-y-6">
         <Section title="Overdue" tone="danger" rentals={overdue} emptyText="Nothing overdue." />
         <Section title="Due within 5 days" tone="warning" rentals={dueSoon} emptyText="Nothing due soon." />
@@ -198,11 +162,7 @@ function Section({
 }) {
   if (rentals.length === 0) return null;
   const toneClass = { danger: "text-danger", warning: "text-warning", success: "text-success" }[tone];
-  const badgeClass = {
-    danger: "badge-danger",
-    warning: "badge-warning",
-    success: "badge-success",
-  }[tone];
+  const badgeClass = { danger: "badge-danger", warning: "badge-warning", success: "badge-success" }[tone];
   const TrendIcon = tone === "danger" ? ArrowDownRight : ArrowUpRight;
 
   return (
@@ -218,7 +178,7 @@ function Section({
             <Link
               key={r.id}
               href={`/rentals/${r.id}`}
-              className="flex items-center justify-between px-5 py-4 hover:bg-slate-50 transition-colors duration-150"
+              className="flex items-center justify-between px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-150"
             >
               <div>
                 <p className="plate">{r.trailers?.vin}</p>
