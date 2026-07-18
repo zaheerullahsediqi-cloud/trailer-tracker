@@ -26,14 +26,17 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center">
-      <form onSubmit={handleSubmit} className="card p-6 w-full max-w-sm space-y-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-secondary to-primary px-4">
+      <form onSubmit={handleSubmit} className="card p-8 w-full max-w-sm space-y-5 animate-in">
         <div>
+          <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center mb-4">
+            <span className="text-white font-bold text-sm">TT</span>
+          </div>
           <p className="eyebrow">Sign in</p>
-          <h1 className="font-display text-2xl">Trailer Tracker</h1>
+          <h1 className="page-title mt-1">Trailer Tracker</h1>
         </div>
         {error && (
-          <p className="text-sm text-alert border border-alert/40 rounded-sm px-3 py-2">
+          <p className="text-sm text-danger bg-danger/5 border border-danger/20 rounded-lg px-3 py-2.5">
             {error}
           </p>
         )}

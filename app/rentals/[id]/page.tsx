@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import ContractUpload from "./contract-upload";
 import InvoiceActions from "./invoice-actions";
 import RentalControls from "./rental-controls";
+import RentalTermsEdit from "./rental-terms-edit";
 
 export default async function RentalDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -32,9 +33,11 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
     <div className="space-y-8">
       <div className="flex items-start justify-between">
         <div>
-          <p className="eyebrow">{rental.status}</p>
-          <h1 className="font-display text-3xl plate">{rental.trailers.vin}</h1>
-          <p className="text-rig-300">
+          <span className={rental.status === "active" ? "badge-success" : "badge-neutral"}>
+            {rental.status}
+          </span>
+          <h1 className="page-title plate mt-2">{rental.trailers.vin}</h1>
+          <p className="text-secondary text-sm mt-0.5">
             {rental.trailers.year} {rental.trailers.make} {rental.trailers.model}
           </p>
         </div>
@@ -42,23 +45,17 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
-        <div className="card p-4">
+        <div className="card p-5">
           <p className="eyebrow mb-2">Renter</p>
-          <p className="font-medium">{rental.renters.name}</p>
-          <p className="text-sm text-rig-400">{rental.renters.phone}</p>
-          <p className="text-sm text-rig-400">{rental.renters.email}</p>
-          <p className="text-sm text-rig-400">{rental.renters.address}</p>
+          <p className="font-semibold text-primary">{rental.renters.name}</p>
+          <p className="text-sm text-muted mt-1">{rental.renters.phone}</p>
+          <p className="text-sm text-muted">{rental.renters.email}</p>
+          <p className="text-sm text-muted">{rental.renters.address}</p>
         </div>
-        <div className="card p-4">
-          <p className="eyebrow mb-2">Rental terms</p>
-          <p className="text-sm">Start: {rental.start_date}</p>
-          <p className="text-sm">Billing period: {rental.period} ({rental.period_days} days)</p>
-          <p className="text-sm">Rate: ${Number(rental.rate).toFixed(2)}</p>
-          <p className="text-sm text-signal">Next due: {rental.next_due_date}</p>
-        </div>
+        <RentalTermsEdit rental={rental} />
       </div>
 
-      <div className="card p-4">
+      <div className="card p-5">
         <p className="eyebrow mb-3">Contract</p>
         <ContractUpload
           rentalId={rental.id}
@@ -67,18 +64,18 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
         />
       </div>
 
-      <div className="card p-4">
+      <div className="card p-5">
         <p className="eyebrow mb-3">Invoicing</p>
         <InvoiceActions rentalId={rental.id} />
-        <div className="mt-4 space-y-1">
+        <div className="mt-4 space-y-1.5">
           {(invoices ?? []).map((inv: any) => (
-            <p key={inv.id} className="text-sm text-rig-400">
-              {inv.period_start} → {inv.period_end} — ${Number(inv.amount).toFixed(2)} — sent to{" "}
+            <p key={inv.id} className="text-sm text-muted">
+              {inv.period_start} → {inv.period_end} — <span className="font-medium text-primary">${Number(inv.amount).toFixed(2)}</span> — sent to{" "}
               {inv.sent_to} on {new Date(inv.sent_at).toLocaleDateString()}
             </p>
           ))}
           {(!invoices || invoices.length === 0) && (
-            <p className="text-sm text-rig-500">No invoices sent yet.</p>
+            <p className="text-sm text-muted">No invoices sent yet.</p>
           )}
         </div>
       </div>

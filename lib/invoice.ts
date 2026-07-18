@@ -28,8 +28,8 @@ export async function generateInvoicePdf(params: {
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
 
-  const navy = rgb(0.07, 0.09, 0.16);
-  const amber = rgb(0.91, 0.64, 0.24);
+  const navy = rgb(0.059, 0.09, 0.165); // #0F172A
+  const amber = rgb(0.145, 0.388, 0.922); // #2563EB accent
   const gray = rgb(0.4, 0.44, 0.53);
 
   let y = 740;

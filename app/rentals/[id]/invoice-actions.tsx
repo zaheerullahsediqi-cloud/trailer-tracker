@@ -43,8 +43,8 @@ export default function InvoiceActions({ rentalId }: { rentalId: string }) {
           Mark period paid → advance due date
         </button>
       </div>
-      {done && <p className="text-sm text-go">Invoice sent.</p>}
-      {error && <p className="text-sm text-alert">{error}</p>}
+      {done && <p className="text-sm text-success">Invoice sent.</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );
 }

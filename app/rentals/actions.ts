@@ -35,6 +35,25 @@ export async function createRental(formData: FormData) {
   revalidatePath("/rentals");
 }
 
+export async function updateRentalTerms(id: string, formData: FormData) {
+  const supabase = createClient();
+  const start_date = String(formData.get("start_date"));
+  const period = String(formData.get("period"));
+  const customDays = Number(formData.get("custom_days") || 0);
+  const rate = Number(formData.get("rate") || 0);
+  const next_due_date = String(formData.get("next_due_date"));
+  const period_days = periodToDays(period, customDays);
+
+  const { error } = await supabase
+    .from("rentals")
+    .update({ start_date, period, period_days, rate, next_due_date })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/rentals/${id}`);
+  revalidatePath("/rentals");
+  revalidatePath("/");
+}
+
 export async function updateRentalStatus(id: string, status: string) {
   const supabase = createClient();
   const { error } = await supabase.from("rentals").update({ status }).eq("id", id);

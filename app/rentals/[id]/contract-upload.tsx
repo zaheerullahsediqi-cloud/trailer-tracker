@@ -46,12 +46,12 @@ export default function ContractUpload({
       {existingUrl ? (
         <p className="text-sm">
           Current contract:{" "}
-          <a href={existingUrl} target="_blank" className="text-signal underline">
+          <a href={existingUrl} target="_blank" className="text-accent underline">
             {existingFilename || "view PDF"}
           </a>
         </p>
       ) : (
-        <p className="text-sm text-rig-400">No contract uploaded yet.</p>
+        <p className="text-sm text-muted">No contract uploaded yet.</p>
       )}
       <div>
         <label className="btn-secondary cursor-pointer inline-block">
@@ -65,7 +65,7 @@ export default function ContractUpload({
           />
         </label>
       </div>
-      {error && <p className="text-sm text-alert">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );
 }

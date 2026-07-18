@@ -5,27 +5,35 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        rig: {
-          950: "#0B1220",
-          900: "#111B2E",
-          800: "#182640",
-          700: "#233252",
-          600: "#334469",
-          400: "#7A8CAD",
-          200: "#C7D0E0",
-          100: "#EEF1F6",
+        primary: "#0F172A",
+        secondary: "#1E293B",
+        accent: {
+          DEFAULT: "#2563EB",
+          light: "#3B82F6",
+          dark: "#1D4ED8",
         },
-        signal: {
-          DEFAULT: "#E8A33D",
-          dim: "#B9812C",
-        },
-        alert: "#D5493B",
-        go: "#3E9B6F",
+        success: "#16A34A",
+        warning: "#F59E0B",
+        danger: "#DC2626",
+        surface: "#F8FAFC",
+        muted: "#64748B",
+        border: "#E2E8F0",
       },
       fontFamily: {
-        display: ["'Barlow Condensed'", "sans-serif"],
-        body: ["'Inter'", "sans-serif"],
-        mono: ["'IBM Plex Mono'", "monospace"],
+        sans: ["'Inter'", "sans-serif"],
+      },
+      boxShadow: {
+        card: "0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06)",
+        "card-hover": "0 4px 12px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.06)",
+        elevated: "0 10px 30px rgba(15, 23, 42, 0.10)",
+      },
+      keyframes: {
+        fadeIn: { "0%": { opacity: "0" }, "100%": { opacity: "1" } },
+        slideUp: { "0%": { opacity: "0", transform: "translateY(8px)" }, "100%": { opacity: "1", transform: "translateY(0)" } },
+      },
+      animation: {
+        fadeIn: "fadeIn 0.3s ease-out",
+        slideUp: "slideUp 0.35s ease-out",
       },
     },
   },

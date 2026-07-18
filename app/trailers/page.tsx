@@ -13,7 +13,7 @@ export default async function TrailersPage() {
     <div className="space-y-8">
       <div>
         <p className="eyebrow">Fleet</p>
-        <h1 className="font-display text-3xl">Trailers</h1>
+        <h1 className="page-title">Trailers</h1>
       </div>
 
       <form action={addTrailer} className="card p-4 grid sm:grid-cols-2 gap-4">
@@ -47,7 +47,7 @@ export default async function TrailersPage() {
           <TrailerRow key={t.id} trailer={t} />
         ))}
         {(!trailers || trailers.length === 0) && (
-          <p className="text-rig-400">No trailers yet. Add your first one above.</p>
+          <p className="text-muted">No trailers yet. Add your first one above.</p>
         )}
       </div>
     </div>

@@ -17,7 +17,7 @@ export default async function RentalsPage() {
     <div className="space-y-8">
       <div>
         <p className="eyebrow">Agreements</p>
-        <h1 className="font-display text-3xl">Rentals</h1>
+        <h1 className="page-title">Rentals</h1>
       </div>
 
       <form action={createRental} className="card p-4 grid sm:grid-cols-2 gap-4">
@@ -64,10 +64,10 @@ export default async function RentalsPage() {
           <input name="custom_days" type="number" className="input" placeholder="e.g. 14" />
         </div>
         <div className="sm:col-span-2">
-          <p className="text-xs text-rig-400 mb-2">
+          <p className="text-xs text-muted mb-2">
             No trailer or renter listed? Add them on the{" "}
-            <Link href="/trailers" className="text-signal underline">Trailers</Link> or{" "}
-            <Link href="/renters" className="text-signal underline">Renters</Link> page first.
+            <Link href="/trailers" className="text-accent underline">Trailers</Link> or{" "}
+            <Link href="/renters" className="text-accent underline">Renters</Link> page first.
           </p>
           <button className="btn-primary">Create rental</button>
         </div>
@@ -78,22 +78,24 @@ export default async function RentalsPage() {
           <Link
             key={r.id}
             href={`/rentals/${r.id}`}
-            className="card p-4 flex items-center justify-between hover:border-signal transition-colors"
+            className="card card-hover p-5 flex items-center justify-between"
           >
             <div>
-              <p className="plate text-sm">{r.trailers?.vin}</p>
-              <p>
+              <p className="plate">{r.trailers?.vin}</p>
+              <p className="text-sm font-medium text-primary mt-0.5">
                 {r.trailers?.make} {r.trailers?.model} — {r.renters?.name}
               </p>
             </div>
-            <div className="text-right">
-              <p className="font-display uppercase text-sm text-rig-400">{r.status}</p>
-              <p className="text-xs text-rig-400">Next due {r.next_due_date}</p>
+            <div className="text-right flex flex-col items-end gap-1">
+              <span className={r.status === "active" ? "badge-success" : "badge-neutral"}>
+                {r.status}
+              </span>
+              <p className="text-xs text-muted">Next due {r.next_due_date}</p>
             </div>
           </Link>
         ))}
         {(!rentals || rentals.length === 0) && (
-          <p className="text-rig-400">No rentals yet. Create your first one above.</p>
+          <p className="text-muted text-sm">No rentals yet. Create your first one above.</p>
         )}
       </div>
     </div>

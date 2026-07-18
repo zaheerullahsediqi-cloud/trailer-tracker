@@ -53,12 +53,17 @@ export default function TrailerRow({ trailer }: { trailer: any }) {
   }
 
   return (
-    <div className="card p-4 flex items-center justify-between">
-      <div>
-        <p className="plate text-sm">{trailer.vin}</p>
-        <p>
-          {trailer.year} {trailer.make} {trailer.model} {trailer.plate ? `— Plate ${trailer.plate}` : ""}
-        </p>
+    <div className="card card-hover p-5 flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+          <span className="text-accent text-xs font-bold">{trailer.make?.[0] ?? "T"}</span>
+        </div>
+        <div>
+          <p className="plate">{trailer.vin}</p>
+          <p className="text-sm font-medium text-primary mt-0.5">
+            {trailer.year} {trailer.make} {trailer.model} {trailer.plate ? `— Plate ${trailer.plate}` : ""}
+          </p>
+        </div>
       </div>
       <div className="flex gap-2">
         <button className="btn-secondary text-xs" onClick={() => setEditing(true)}>
