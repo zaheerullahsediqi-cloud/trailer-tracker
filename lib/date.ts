@@ -25,9 +25,29 @@ export function addMonths(dateStr: string, months: number): string {
 }
 
 // Advances a date by one billing cycle, using calendar-accurate math for
-// monthly/weekly periods and a literal day count only for custom periods.
+// monthly/weekly/semiannual/annual periods and a literal day count only for
+// custom periods.
 export function advanceByPeriod(dateStr: string, period: string, periodDays: number): string {
   if (period === "monthly") return addMonths(dateStr, 1);
   if (period === "weekly") return addDays(dateStr, 7);
+  if (period === "semiannual") return addMonths(dateStr, 6);
+  if (period === "annual") return addMonths(dateStr, 12);
   return addDays(dateStr, periodDays);
+}
+
+export function periodLabel(period: string, periodDays?: number): string {
+  switch (period) {
+    case "weekly":
+      return "Weekly";
+    case "monthly":
+      return "Monthly";
+    case "semiannual":
+      return "Every 6 months";
+    case "annual":
+      return "Yearly";
+    case "custom":
+      return periodDays ? `Every ${periodDays} days` : "Custom";
+    default:
+      return period;
+  }
 }

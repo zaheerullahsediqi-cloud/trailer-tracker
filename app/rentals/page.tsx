@@ -64,6 +64,8 @@ export default async function RentalsPage() {
           <select name="period" className="input" defaultValue="monthly">
             <option value="weekly">Weekly</option>
             <option value="monthly">Monthly</option>
+            <option value="semiannual">Every 6 months</option>
+            <option value="annual">Yearly</option>
             <option value="custom">Custom (days)</option>
           </select>
         </div>

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { updateRentalTerms } from "../actions";
 import { useRouter } from "next/navigation";
+import { periodLabel } from "@/lib/date";
 
 export default function RentalTermsEdit({ rental }: { rental: any }) {
   const [editing, setEditing] = useState(false);
@@ -36,6 +37,8 @@ export default function RentalTermsEdit({ rental }: { rental: any }) {
           <select name="period" defaultValue={rental.period} className="input">
             <option value="weekly">Weekly</option>
             <option value="monthly">Monthly</option>
+            <option value="semiannual">Every 6 months</option>
+            <option value="annual">Yearly</option>
             <option value="custom">Custom (days)</option>
           </select>
         </div>
@@ -92,7 +95,7 @@ export default function RentalTermsEdit({ rental }: { rental: any }) {
       </div>
       <p className="text-sm">Start: {rental.start_date}</p>
       <p className="text-sm">
-        Billing period: {rental.period} ({rental.period_days} days)
+        Billing period: {periodLabel(rental.period, rental.period_days)}
       </p>
       <p className="text-sm">Rate: ${Number(rental.rate).toFixed(2)}</p>
       <p className="text-sm text-accent">Next due: {rental.next_due_date}</p>

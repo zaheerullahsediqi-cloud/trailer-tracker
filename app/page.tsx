@@ -11,6 +11,8 @@ import {
   Gauge,
   ArrowUpRight,
   ArrowDownRight,
+  Wallet,
+  ShieldCheck,
 } from "lucide-react";
 
 function daysUntil(dateStr: string) {
@@ -23,7 +25,7 @@ function daysUntil(dateStr: string) {
 export default async function Dashboard() {
   const supabase = createClient();
 
-  const [{ data: rentals }, { data: trailers }, { data: invoices }] = await Promise.all([
+  const [{ data: rentals }, { data: trailers }, { data: invoices }, { data: monthPayments }] = await Promise.all([
     supabase
       .from("rentals")
       .select("*, trailers(vin, make, model), renters(name, email)")
@@ -31,6 +33,10 @@ export default async function Dashboard() {
       .order("next_due_date", { ascending: true }),
     supabase.from("trailers").select("id"),
     supabase.from("invoices").select("amount, sent_at").order("sent_at", { ascending: true }),
+    supabase
+      .from("payments")
+      .select("amount, payment_date")
+      .gte("payment_date", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10)),
   ]);
 
   const list = rentals ?? [];
@@ -49,6 +55,24 @@ export default async function Dashboard() {
   const monthlyRevenue = list.reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
   const outstandingBalance = overdue.reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
   const upcomingDueAmount = dueSoon.reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
+
+  const collectedThisMonth = (monthPayments ?? []).reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+
+  const depositsHeld = list.reduce((sum: number, r: any) => {
+    if (r.security_deposit_status === "held") return sum + Number(r.security_deposit_amount || 0);
+    if (r.security_deposit_status === "partially_returned") {
+      return sum + Math.max(Number(r.security_deposit_amount || 0) - Number(r.security_deposit_returned_amount || 0), 0);
+    }
+    return sum;
+  }, 0);
+
+  const downPaymentsOutstanding = list.reduce((sum: number, r: any) => {
+    if (r.down_payment_status === "not_collected") return sum + Number(r.down_payment_amount || 0);
+    if (r.down_payment_status === "partially_collected") {
+      return sum + Math.max(Number(r.down_payment_amount || 0) - Number(r.down_payment_collected_amount || 0), 0);
+    }
+    return sum;
+  }, 0);
 
   const nowUtc = new Date();
   const months: { key: string; month: string; revenue: number }[] = [];
@@ -118,6 +142,45 @@ export default async function Dashboard() {
             </div>
           );
         })}
+      </div>
+
+      <div>
+        <p className="section-title mb-3">Cash Position</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="stat-card">
+            <div className="stat-icon bg-success/10 text-success">
+              <Wallet size={19} strokeWidth={2} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-primary tabular-nums">
+                ${collectedThisMonth.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </p>
+              <p className="text-xs text-muted font-medium mt-0.5">Collected This Month (actual)</p>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon bg-accent/10 text-accent">
+              <ShieldCheck size={19} strokeWidth={2} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-primary tabular-nums">
+                ${depositsHeld.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </p>
+              <p className="text-xs text-muted font-medium mt-0.5">Security Deposits Held</p>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon bg-warning/10 text-warning">
+              <DollarSign size={19} strokeWidth={2} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-primary tabular-nums">
+                ${downPaymentsOutstanding.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </p>
+              <p className="text-xs text-muted font-medium mt-0.5">Down Payments Outstanding</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="card p-5">

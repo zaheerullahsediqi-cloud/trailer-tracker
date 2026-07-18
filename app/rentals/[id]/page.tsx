@@ -6,6 +6,8 @@ import RentalControls from "./rental-controls";
 import RentalTermsEdit from "./rental-terms-edit";
 import SecurityDepositEdit from "./security-deposit-edit";
 import DownPaymentEdit from "./down-payment-edit";
+import PaymentsLog from "./payments-log";
+import ConditionPhotos from "./condition-photos";
 
 export default async function RentalDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -30,6 +32,29 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
     .select("*")
     .eq("rental_id", rental.id)
     .order("created_at", { ascending: false });
+
+  const { data: payments } = await supabase
+    .from("payments")
+    .select("*")
+    .eq("rental_id", rental.id)
+    .order("payment_date", { ascending: false });
+
+  const { data: photoRows } = await supabase
+    .from("condition_photos")
+    .select("*")
+    .eq("rental_id", rental.id)
+    .order("created_at", { ascending: true });
+
+  const photosWithUrls = await Promise.all(
+    (photoRows ?? []).map(async (p: any) => {
+      const { data } = await supabase.storage
+        .from("condition-photos")
+        .createSignedUrl(p.photo_path, 60 * 60);
+      return { id: p.id, url: data?.signedUrl ?? null, photo_path: p.photo_path, caption: p.caption, stage: p.stage };
+    })
+  );
+  const pickupPhotos = photosWithUrls.filter((p) => p.stage === "pickup");
+  const returnPhotos = photosWithUrls.filter((p) => p.stage === "return");
 
   return (
     <div className="space-y-8">
@@ -61,6 +86,10 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
         <SecurityDepositEdit rental={rental} />
         <DownPaymentEdit rental={rental} />
       </div>
+
+      <PaymentsLog rentalId={rental.id} payments={payments ?? []} />
+
+      <ConditionPhotos rentalId={rental.id} pickupPhotos={pickupPhotos} returnPhotos={returnPhotos} />
 
       <div className="card p-5">
         <p className="eyebrow mb-3">Contract</p>

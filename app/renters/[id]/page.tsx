@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import NotesEdit from "./notes-edit";
-import { FileText, Receipt, Clock } from "lucide-react";
+import { FileText, Receipt, Clock, Wallet } from "lucide-react";
 
 function daysUntil(dateStr: string) {
   const today = new Date();
@@ -28,6 +28,12 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
     .eq("rentals.renter_id", params.id)
     .order("sent_at", { ascending: false });
 
+  const { data: payments } = await supabase
+    .from("payments")
+    .select("*, rentals!inner(renter_id, trailers(vin))")
+    .eq("rentals.renter_id", params.id)
+    .order("payment_date", { ascending: false });
+
   const list = rentals ?? [];
   const activeRental = list.find((r: any) => r.status === "active");
   const balanceDue = list
@@ -42,6 +48,8 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
     })
   );
 
+  const totalCollected = (payments ?? []).reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+
   const timeline = [
     ...list.map((r: any) => ({
       type: "rental_start" as const,
@@ -52,6 +60,11 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
       type: "invoice" as const,
       date: inv.sent_at,
       label: `Invoice sent — $${Number(inv.amount).toFixed(2)}`,
+    })),
+    ...(payments ?? []).map((p: any) => ({
+      type: "payment" as const,
+      date: p.payment_date,
+      label: `Payment received — $${Number(p.amount).toFixed(2)}`,
     })),
   ]
     .filter((t) => t.date)
@@ -72,16 +85,16 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
           </p>
         </div>
         <div className="stat-card">
+          <p className="text-xs text-muted">Total Collected</p>
+          <p className="text-2xl font-bold text-success">${totalCollected.toFixed(2)}</p>
+        </div>
+        <div className="stat-card">
           <p className="text-xs text-muted">Current Trailer</p>
           <p className="text-lg font-bold text-primary plate">{activeRental?.trailers?.vin || "None"}</p>
         </div>
         <div className="stat-card">
           <p className="text-xs text-muted">Total Rentals</p>
           <p className="text-2xl font-bold text-primary">{list.length}</p>
-        </div>
-        <div className="stat-card">
-          <p className="text-xs text-muted">Invoices Sent</p>
-          <p className="text-2xl font-bold text-primary">{invoices?.length ?? 0}</p>
         </div>
       </div>
 
@@ -125,7 +138,7 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
 
       <div>
         <p className="section-title mb-3 flex items-center gap-2">
-          <Receipt size={14} /> Payment history
+          <Receipt size={14} /> Invoices sent
         </p>
         <div className="card divide-y divide-border overflow-hidden">
           {(invoices ?? []).map((inv: any) => (
@@ -141,6 +154,24 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
           ))}
           {(!invoices || invoices.length === 0) && (
             <p className="text-sm text-muted px-5 py-4">No invoices sent yet.</p>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <p className="section-title mb-3 flex items-center gap-2">
+          <Wallet size={14} /> Payments received
+        </p>
+        <div className="card divide-y divide-border overflow-hidden">
+          {(payments ?? []).map((p: any) => (
+            <div key={p.id} className="flex items-center justify-between px-5 py-3">
+              <p className="text-sm text-primary">{p.payment_date}</p>
+              <p className="text-sm font-medium text-success">${Number(p.amount).toFixed(2)}</p>
+              <p className="text-xs text-muted">{p.method}{p.notes ? ` — ${p.notes}` : ""}</p>
+            </div>
+          ))}
+          {(!payments || payments.length === 0) && (
+            <p className="text-sm text-muted px-5 py-4">No payments recorded yet.</p>
           )}
         </div>
       </div>

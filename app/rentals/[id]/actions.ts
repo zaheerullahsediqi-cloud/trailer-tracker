@@ -92,3 +92,62 @@ export async function deleteRental(rentalId: string) {
   const { error } = await supabase.from("rentals").delete().eq("id", rentalId);
   if (error) throw new Error(error.message);
 }
+
+export async function recordPayment(rentalId: string, formData: FormData) {
+  const supabase = createClient();
+  const amount = Number(formData.get("amount") || 0);
+  const payment_date = String(formData.get("payment_date") || new Date().toISOString().slice(0, 10));
+  const method = String(formData.get("method") || "other");
+  const notes = String(formData.get("notes") || "").trim() || null;
+
+  if (amount <= 0) throw new Error("Enter a payment amount greater than $0.");
+
+  const { error } = await supabase.from("payments").insert({
+    rental_id: rentalId,
+    amount,
+    payment_date,
+    method,
+    notes,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/rentals/${rentalId}`);
+  revalidatePath("/payments");
+  revalidatePath("/renters", "layout");
+  revalidatePath("/");
+  revalidatePath("/reports");
+}
+
+export async function deletePayment(id: string, rentalId: string) {
+  const supabase = createClient();
+  const { error } = await supabase.from("payments").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/rentals/${rentalId}`);
+  revalidatePath("/payments");
+  revalidatePath("/");
+  revalidatePath("/reports");
+}
+
+export async function recordConditionPhoto(
+  rentalId: string,
+  stage: "pickup" | "return",
+  photoPath: string,
+  caption?: string
+) {
+  const supabase = createClient();
+  const { error } = await supabase.from("condition_photos").insert({
+    rental_id: rentalId,
+    stage,
+    photo_path: photoPath,
+    caption: caption || null,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/rentals/${rentalId}`);
+}
+
+export async function deleteConditionPhoto(id: string, photoPath: string, rentalId: string) {
+  const supabase = createClient();
+  await supabase.storage.from("condition-photos").remove([photoPath]);
+  const { error } = await supabase.from("condition_photos").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/rentals/${rentalId}`);
+}

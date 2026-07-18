@@ -6,6 +6,8 @@ import { advanceByPeriod } from "@/lib/date";
 function periodToDays(period: string, customDays?: number) {
   if (period === "weekly") return 7;
   if (period === "monthly") return 30; // informational only; monthly advancement uses real calendar months, not this count
+  if (period === "semiannual") return 182; // informational only; uses real calendar months
+  if (period === "annual") return 365; // informational only; uses real calendar months
   return customDays && customDays > 0 ? customDays : 30;
 }
 

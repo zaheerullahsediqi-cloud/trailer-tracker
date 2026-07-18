@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import PaymentsTable from "./payments-table";
+import PaymentHistoryTable from "./payment-history-table";
 
 function daysUntil(dateStr: string) {
   const today = new Date();
@@ -33,6 +34,23 @@ export default async function PaymentsPage() {
   const totalDue = rows.reduce((sum, r) => sum + r.rate, 0);
   const overdueTotal = rows.filter((r) => r.status === "Overdue").reduce((sum, r) => sum + r.rate, 0);
 
+  const { data: paymentRows } = await supabase
+    .from("payments")
+    .select("*, rentals(id, trailers(vin), renters(name))")
+    .order("payment_date", { ascending: false });
+
+  const historyRows = (paymentRows ?? []).map((p: any) => ({
+    id: p.id,
+    vin: p.rentals?.trailers?.vin || "—",
+    renter: p.rentals?.renters?.name || "—",
+    amount: Number(p.amount),
+    payment_date: p.payment_date,
+    method: p.method,
+    notes: p.notes,
+    rental_id: p.rentals?.id,
+  }));
+  const totalCollected = historyRows.reduce((sum, r) => sum + r.amount, 0);
+
   return (
     <div className="space-y-6">
       <div>
@@ -44,6 +62,12 @@ export default async function PaymentsPage() {
         </p>
       </div>
       <PaymentsTable rows={rows} />
+
+      <div>
+        <p className="section-title mb-1">Payment History</p>
+        <p className="text-sm text-muted mb-3">${totalCollected.toFixed(2)} collected all-time, across {historyRows.length} payment{historyRows.length === 1 ? "" : "s"}.</p>
+        <PaymentHistoryTable rows={historyRows} />
+      </div>
     </div>
   );
 }
