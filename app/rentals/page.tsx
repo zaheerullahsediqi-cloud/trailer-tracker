@@ -52,6 +52,10 @@ export default async function RentalsPage() {
           <input name="rate" type="number" step="0.01" required className="input" />
         </div>
         <div>
+          <label className="label">Security deposit ($)</label>
+          <input name="security_deposit_amount" type="number" step="0.01" defaultValue="0" className="input" />
+        </div>
+        <div>
           <label className="label">Billing period</label>
           <select name="period" className="input" id="period-select">
             <option value="weekly">Weekly</option>

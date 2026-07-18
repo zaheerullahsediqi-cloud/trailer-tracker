@@ -20,6 +20,7 @@ export async function createRental(formData: FormData) {
 
   const period_days = periodToDays(period, customDays);
   const next_due_date = advanceByPeriod(start_date, period, period_days);
+  const security_deposit_amount = Number(formData.get("security_deposit_amount") || 0);
 
   const { error } = await supabase.from("rentals").insert({
     trailer_id,
@@ -30,9 +31,32 @@ export async function createRental(formData: FormData) {
     rate,
     next_due_date,
     status: "active",
+    security_deposit_amount,
+    security_deposit_status: "held",
   });
   if (error) throw new Error(error.message);
   revalidatePath("/rentals");
+}
+
+export async function updateSecurityDeposit(id: string, formData: FormData) {
+  const supabase = createClient();
+  const security_deposit_amount = Number(formData.get("security_deposit_amount") || 0);
+  const security_deposit_status = String(formData.get("security_deposit_status"));
+  const security_deposit_returned_amount = Number(formData.get("security_deposit_returned_amount") || 0);
+  const returnedDateRaw = String(formData.get("security_deposit_returned_date") || "");
+  const security_deposit_returned_date = returnedDateRaw || null;
+
+  const { error } = await supabase
+    .from("rentals")
+    .update({
+      security_deposit_amount,
+      security_deposit_status,
+      security_deposit_returned_amount,
+      security_deposit_returned_date,
+    })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/rentals/${id}`);
 }
 
 export async function updateRentalTerms(id: string, formData: FormData) {

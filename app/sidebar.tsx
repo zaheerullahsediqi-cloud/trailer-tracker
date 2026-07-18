@@ -1,13 +1,28 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import LogoutButton from "./logout-button";
-import { LayoutDashboard, Truck, Users, FileText, Package } from "lucide-react";
+import {
+  LayoutDashboard,
+  Truck,
+  Users,
+  FileText,
+  CreditCard,
+  Receipt,
+  BarChart3,
+  Bell,
+  Settings,
+  Package,
+} from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/trailers", label: "Trailers", icon: Truck },
   { href: "/renters", label: "Customers", icon: Users },
   { href: "/rentals", label: "Rentals", icon: FileText },
+  { href: "/payments", label: "Payments", icon: CreditCard },
+  { href: "/invoices", label: "Invoices", icon: Receipt },
+  { href: "/reports", label: "Reports", icon: BarChart3 },
+  { href: "/notifications", label: "Notifications", icon: Bell },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export default async function Sidebar() {
@@ -30,7 +45,7 @@ export default async function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 px-3 py-5 space-y-1">
+      <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -46,16 +61,8 @@ export default async function Sidebar() {
         })}
       </nav>
 
-      <div className="px-3 py-4 border-t border-white/10">
-        <div className="flex items-center gap-3 px-3 py-2">
-          <div className="w-8 h-8 rounded-full bg-accent/20 text-accent-light flex items-center justify-center text-xs font-bold shrink-0">
-            {user.email?.[0]?.toUpperCase()}
-          </div>
-          <p className="text-xs text-slate-300 truncate flex-1">{user.email}</p>
-        </div>
-        <div className="px-3 pt-1">
-          <LogoutButton />
-        </div>
+      <div className="px-6 py-4 border-t border-white/10">
+        <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
       </div>
     </aside>
   );

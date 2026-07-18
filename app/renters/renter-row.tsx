@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { updateRenter, deleteRenter } from "./actions";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function RenterRow({ renter }: { renter: any }) {
   const [editing, setEditing] = useState(false);
@@ -62,6 +63,9 @@ export default function RenterRow({ renter }: { renter: any }) {
         </div>
       </div>
       <div className="flex gap-2">
+        <Link href={`/renters/${renter.id}`} className="btn-secondary text-xs">
+          View profile
+        </Link>
         <button className="btn-secondary text-xs" onClick={() => setEditing(true)}>
           Edit
         </button>

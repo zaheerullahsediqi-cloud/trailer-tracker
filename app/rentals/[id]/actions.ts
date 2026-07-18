@@ -70,6 +70,7 @@ export async function sendInvoiceEmail(rentalId: string) {
 
   await supabase.from("invoices").insert({
     rental_id: rentalId,
+    invoice_number: invoiceNumber,
     amount: rental.rate,
     period_start: periodStart,
     period_end: periodEnd,

@@ -4,13 +4,19 @@
 @tailwind utilities;
 
 body {
-  @apply bg-surface text-primary font-sans antialiased;
+  @apply bg-surface text-primary font-sans antialiased transition-colors duration-200;
   -webkit-font-smoothing: antialiased;
+}
+html.dark body {
+  @apply bg-slate-950 text-slate-100;
 }
 
 /* ---- Layout primitives ---- */
 .card {
   @apply bg-white border border-border rounded-xl shadow-card transition-shadow duration-200;
+}
+html.dark .card {
+  @apply bg-slate-900 border-slate-800;
 }
 .card-hover {
   @apply hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200;
@@ -23,11 +29,20 @@ body {
 .page-title {
   @apply text-2xl font-bold text-primary tracking-tight;
 }
+html.dark .page-title {
+  @apply text-white;
+}
 .section-title {
   @apply text-sm font-semibold text-primary uppercase tracking-wide;
 }
+html.dark .section-title {
+  @apply text-slate-100;
+}
 .plate {
   @apply font-mono tracking-wide text-secondary text-sm;
+}
+html.dark .plate {
+  @apply text-slate-300;
 }
 
 /* ---- Buttons ---- */
@@ -40,16 +55,28 @@ body {
 .btn-secondary {
   @apply btn bg-white text-primary border border-border hover:bg-slate-50 hover:border-slate-300;
 }
+html.dark .btn-secondary {
+  @apply bg-slate-900 text-slate-100 border-slate-700 hover:bg-slate-800;
+}
 .btn-danger {
   @apply btn bg-white text-danger border border-danger/30 hover:bg-danger hover:text-white;
 }
+html.dark .btn-danger {
+  @apply bg-slate-900;
+}
 .btn-ghost {
   @apply btn bg-transparent text-muted hover:bg-slate-100 hover:text-primary;
+}
+html.dark .btn-ghost {
+  @apply hover:bg-slate-800 hover:text-white;
 }
 
 /* ---- Forms ---- */
 .input {
   @apply w-full bg-white border border-border rounded-lg px-3.5 py-2.5 text-sm text-primary placeholder:text-slate-400 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent;
+}
+html.dark .input {
+  @apply bg-slate-900 border-slate-700 text-slate-100;
 }
 .label {
   @apply block text-xs font-medium text-muted mb-1.5;
@@ -71,6 +98,9 @@ body {
 .badge-neutral {
   @apply badge bg-slate-100 text-muted;
 }
+html.dark .badge-neutral {
+  @apply bg-slate-800 text-slate-300;
+}
 .badge-accent {
   @apply badge bg-accent/10 text-accent;
 }
@@ -81,6 +111,38 @@ body {
 }
 .stat-icon {
   @apply w-10 h-10 rounded-lg flex items-center justify-center;
+}
+
+/* ---- Tables ---- */
+.dtable {
+  @apply w-full text-sm border-collapse;
+}
+.dtable thead th {
+  @apply sticky top-0 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-muted px-4 py-3 border-b border-border z-10;
+}
+html.dark .dtable thead th {
+  @apply bg-slate-900 text-slate-400 border-slate-800;
+}
+.dtable tbody tr {
+  @apply border-b border-border transition-colors duration-100;
+}
+html.dark .dtable tbody tr {
+  @apply border-slate-800;
+}
+.dtable tbody tr:nth-child(even) {
+  @apply bg-slate-50/60;
+}
+html.dark .dtable tbody tr:nth-child(even) {
+  @apply bg-slate-900/40;
+}
+.dtable tbody tr:hover {
+  @apply bg-accent/5;
+}
+.dtable td {
+  @apply px-4 py-3 text-primary;
+}
+html.dark .dtable td {
+  @apply text-slate-200;
 }
 
 /* ---- Animation helpers ---- */

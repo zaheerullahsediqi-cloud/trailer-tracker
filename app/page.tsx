@@ -48,7 +48,12 @@ export default async function Dashboard() {
   const occupancyRate = totalTrailers > 0 ? Math.round((rentedTrailerIds.size / totalTrailers) * 100) : 0;
   const monthlyRevenue = list.reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
   const outstandingBalance = overdue.reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
-  const upcomingDueAmount = dueSoon.reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
+  // "Upcoming Due" = every active rental that isn't overdue yet (due soon + further out),
+  // not just the narrow 0-5 day window — that window is still shown separately below.
+  const upcomingDueAmount = [...dueSoon, ...upcoming].reduce(
+    (sum: number, r: any) => sum + Number(r.rate || 0),
+    0
+  );
 
   // Build last-6-months revenue series from real invoice sends.
   // Bucketed in UTC throughout so a send near a month boundary can't land

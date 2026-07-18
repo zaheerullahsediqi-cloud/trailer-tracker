@@ -29,6 +29,13 @@ export async function updateRenter(id: string, formData: FormData) {
   revalidatePath("/renters");
 }
 
+export async function updateRenterNotes(id: string, notes: string) {
+  const supabase = createClient();
+  const { error } = await supabase.from("renters").update({ notes }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/renters/${id}`);
+}
+
 export async function deleteRenter(id: string) {
   const supabase = createClient();
   const { error } = await supabase.from("renters").delete().eq("id", id);
