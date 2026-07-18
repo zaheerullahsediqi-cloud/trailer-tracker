@@ -2,6 +2,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { generateInvoicePdf } from "@/lib/invoice";
 import { getResend, FROM_EMAIL, COMPANY_NAME, OWNER_EMAIL } from "@/lib/resend";
+import { addDays } from "@/lib/date";
 import { revalidatePath } from "next/cache";
 
 async function loadRentalBundle(rentalId: string) {
@@ -20,9 +21,7 @@ export async function sendInvoiceEmail(rentalId: string) {
   const supabase = createClient();
 
   const periodStart = rental.next_due_date; // billing for the upcoming period
-  const periodEndDate = new Date(rental.next_due_date);
-  periodEndDate.setDate(periodEndDate.getDate() + rental.period_days);
-  const periodEnd = periodEndDate.toISOString().slice(0, 10);
+  const periodEnd = addDays(rental.next_due_date, rental.period_days);
 
   const { count } = await supabase
     .from("invoices")

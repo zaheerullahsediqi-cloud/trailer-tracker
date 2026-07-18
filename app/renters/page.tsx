@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { addRenter } from "./actions";
-import DeleteButton from "./delete-button";
+import RenterRow from "./renter-row";
 
 export default async function RentersPage() {
   const supabase = createClient();
@@ -40,15 +40,7 @@ export default async function RentersPage() {
 
       <div className="space-y-2">
         {(renters ?? []).map((r: any) => (
-          <div key={r.id} className="card p-4 flex items-center justify-between">
-            <div>
-              <p className="font-medium">{r.name}</p>
-              <p className="text-sm text-rig-400">
-                {[r.phone, r.email, r.address].filter(Boolean).join(" · ")}
-              </p>
-            </div>
-            <DeleteButton id={r.id} />
-          </div>
+          <RenterRow key={r.id} renter={r} />
         ))}
         {(!renters || renters.length === 0) && (
           <p className="text-rig-400">No renters yet. Add your first one above.</p>

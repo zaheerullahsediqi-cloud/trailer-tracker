@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { addTrailer } from "./actions";
-import DeleteButton from "./delete-button";
+import TrailerRow from "./trailer-row";
 
 export default async function TrailersPage() {
   const supabase = createClient();
@@ -44,15 +44,7 @@ export default async function TrailersPage() {
 
       <div className="space-y-2">
         {(trailers ?? []).map((t: any) => (
-          <div key={t.id} className="card p-4 flex items-center justify-between">
-            <div>
-              <p className="plate text-sm">{t.vin}</p>
-              <p>
-                {t.year} {t.make} {t.model} {t.plate ? `— Plate ${t.plate}` : ""}
-              </p>
-            </div>
-            <DeleteButton id={t.id} />
-          </div>
+          <TrailerRow key={t.id} trailer={t} />
         ))}
         {(!trailers || trailers.length === 0) && (
           <p className="text-rig-400">No trailers yet. Add your first one above.</p>

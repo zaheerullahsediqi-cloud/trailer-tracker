@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateInvoicePdf } from "@/lib/invoice";
 import { COMPANY_NAME, OWNER_EMAIL } from "@/lib/resend";
+import { addDays } from "@/lib/date";
 
 export async function GET(
   req: NextRequest,
@@ -21,9 +22,7 @@ export async function GET(
   if (error || !rental) return new NextResponse("Not found", { status: 404 });
 
   const periodStart = rental.next_due_date;
-  const periodEndDate = new Date(rental.next_due_date);
-  periodEndDate.setDate(periodEndDate.getDate() + rental.period_days);
-  const periodEnd = periodEndDate.toISOString().slice(0, 10);
+  const periodEnd = addDays(rental.next_due_date, rental.period_days);
 
   const pdfBytes = await generateInvoicePdf({
     invoiceNumber: `${rental.trailers.vin.slice(-6)}-PREVIEW`,
