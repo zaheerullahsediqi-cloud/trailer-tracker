@@ -2,7 +2,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { generateInvoicePdf } from "@/lib/invoice";
 import { getResend, FROM_EMAIL } from "@/lib/resend";
-import { getCompanySettings } from "@/lib/settings";
+import { getCompanySettings, fetchLogoForPdf } from "@/lib/settings";
 import { advanceByPeriod } from "@/lib/date";
 import { revalidatePath } from "next/cache";
 
@@ -20,7 +20,8 @@ async function loadRentalBundle(rentalId: string) {
 export async function sendInvoiceEmail(rentalId: string) {
   const rental = await loadRentalBundle(rentalId);
   const supabase = createClient();
-  const { companyName, contactEmail } = await getCompanySettings(supabase);
+  const { companyName, contactEmail, logoUrl } = await getCompanySettings(supabase);
+  const logo = await fetchLogoForPdf(logoUrl);
 
   const periodStart = rental.next_due_date; // billing for the upcoming period
   const periodEnd = advanceByPeriod(rental.next_due_date, rental.period, rental.period_days);
@@ -35,6 +36,8 @@ export async function sendInvoiceEmail(rentalId: string) {
     invoiceNumber,
     companyName,
     companyEmail: contactEmail,
+    logoBytes: logo?.bytes,
+    logoContentType: logo?.contentType,
     trailer: rental.trailers,
     renter: rental.renters,
     periodStart,

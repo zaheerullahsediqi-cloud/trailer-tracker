@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateInvoicePdf } from "@/lib/invoice";
 import { advanceByPeriod } from "@/lib/date";
-import { getCompanySettings } from "@/lib/settings";
+import { getCompanySettings, fetchLogoForPdf } from "@/lib/settings";
 
 export async function GET(
   req: NextRequest,
@@ -21,7 +21,8 @@ export async function GET(
     .single();
   if (error || !rental) return new NextResponse("Not found", { status: 404 });
 
-  const { companyName, contactEmail } = await getCompanySettings(supabase);
+  const { companyName, contactEmail, logoUrl } = await getCompanySettings(supabase);
+  const logo = await fetchLogoForPdf(logoUrl);
   const periodStart = rental.next_due_date;
   const periodEnd = advanceByPeriod(rental.next_due_date, rental.period, rental.period_days);
 
@@ -29,6 +30,8 @@ export async function GET(
     invoiceNumber: `${rental.trailers.vin.slice(-6)}-PREVIEW`,
     companyName,
     companyEmail: contactEmail,
+    logoBytes: logo?.bytes,
+    logoContentType: logo?.contentType,
     trailer: rental.trailers,
     renter: rental.renters,
     periodStart,

@@ -4,6 +4,8 @@ export async function generateInvoicePdf(params: {
   invoiceNumber: string;
   companyName: string;
   companyEmail?: string;
+  logoBytes?: Uint8Array | null;
+  logoContentType?: string | null;
   trailer: { vin: string; make: string; model: string; year?: number | null };
   renter: { name: string; address?: string | null; phone?: string | null; email?: string | null };
   periodStart: string;
@@ -15,6 +17,8 @@ export async function generateInvoicePdf(params: {
     invoiceNumber,
     companyName,
     companyEmail,
+    logoBytes,
+    logoContentType,
     trailer,
     renter,
     periodStart,
@@ -32,15 +36,39 @@ export async function generateInvoicePdf(params: {
   const amber = rgb(0.145, 0.388, 0.922); // #2563EB accent
   const gray = rgb(0.4, 0.44, 0.53);
 
+  let logoImage = null;
+  if (logoBytes) {
+    try {
+      logoImage = logoContentType?.includes("png")
+        ? await doc.embedPng(logoBytes)
+        : await doc.embedJpg(logoBytes);
+    } catch {
+      logoImage = null; // if the image can't be embedded, just skip it rather than fail the whole invoice
+    }
+  }
+
   let y = 740;
   page.drawRectangle({ x: 0, y: 760, width: 612, height: 32, color: navy });
-  page.drawText(companyName.toUpperCase(), {
-    x: 40,
-    y: 769,
-    size: 14,
-    font: bold,
-    color: amber,
-  });
+  if (logoImage) {
+    const logoHeight = 22;
+    const logoWidth = (logoImage.width / logoImage.height) * logoHeight;
+    page.drawImage(logoImage, { x: 40, y: 765, width: logoWidth, height: logoHeight });
+    page.drawText(companyName.toUpperCase(), {
+      x: 40 + logoWidth + 10,
+      y: 769,
+      size: 14,
+      font: bold,
+      color: amber,
+    });
+  } else {
+    page.drawText(companyName.toUpperCase(), {
+      x: 40,
+      y: 769,
+      size: 14,
+      font: bold,
+      color: amber,
+    });
+  }
 
   page.drawText("INVOICE", { x: 40, y, size: 22, font: bold, color: navy });
   page.drawText(`# ${invoiceNumber}`, { x: 40, y: y - 20, size: 11, font, color: gray });

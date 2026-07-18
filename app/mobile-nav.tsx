@@ -32,7 +32,15 @@ const navItems = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-export default function MobileNav({ userEmail }: { userEmail: string | null }) {
+export default function MobileNav({
+  userEmail,
+  companyName,
+  logoUrl,
+}: {
+  userEmail: string | null;
+  companyName: string;
+  logoUrl: string | null;
+}) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -43,11 +51,15 @@ export default function MobileNav({ userEmail }: { userEmail: string | null }) {
   return (
     <>
       <header className="md:hidden bg-primary text-white sticky top-0 z-30 flex items-center justify-between px-4 py-3">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-accent flex items-center justify-center">
-            <Package size={14} className="text-white" />
-          </div>
-          <span className="font-bold text-sm">Trailer Tracker</span>
+        <Link href="/" className="flex items-center gap-2 min-w-0">
+          {logoUrl ? (
+            <img src={logoUrl} alt={companyName} className="w-7 h-7 rounded-md object-contain bg-white/5 shrink-0" />
+          ) : (
+            <div className="w-7 h-7 rounded-md bg-accent flex items-center justify-center shrink-0">
+              <Package size={14} className="text-white" />
+            </div>
+          )}
+          <span className="font-bold text-sm truncate">{companyName}</span>
         </Link>
         <div className="flex items-center gap-1">
           <ThemeToggle />

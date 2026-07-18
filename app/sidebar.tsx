@@ -25,7 +25,13 @@ const navItems = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-export default async function Sidebar() {
+export default async function Sidebar({
+  companyName,
+  logoUrl,
+}: {
+  companyName: string;
+  logoUrl: string | null;
+}) {
   const supabase = createClient();
   const {
     data: { user },
@@ -36,11 +42,15 @@ export default async function Sidebar() {
   return (
     <aside className="hidden md:flex md:flex-col w-64 shrink-0 bg-primary text-white min-h-screen sticky top-0">
       <div className="flex items-center gap-2.5 px-6 py-6 border-b border-white/10">
-        <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center shrink-0">
-          <Package size={18} className="text-white" />
-        </div>
-        <div className="leading-tight">
-          <p className="font-bold text-[15px] tracking-tight">Trailer Tracker</p>
+        {logoUrl ? (
+          <img src={logoUrl} alt={companyName} className="w-9 h-9 rounded-lg object-contain bg-white/5 shrink-0" />
+        ) : (
+          <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center shrink-0">
+            <Package size={18} className="text-white" />
+          </div>
+        )}
+        <div className="leading-tight min-w-0">
+          <p className="font-bold text-[15px] tracking-tight truncate">{companyName}</p>
           <p className="text-[11px] text-slate-400">Fleet Management</p>
         </div>
       </div>

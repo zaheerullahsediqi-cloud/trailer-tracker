@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { updateCompanySettings } from "./actions";
 import PasswordForm from "./password-form";
+import LogoUpload from "./logo-upload";
 
 export default async function SettingsPage() {
   const supabase = createClient();
@@ -20,6 +21,8 @@ export default async function SettingsPage() {
         <p className="eyebrow mb-2">Signed in as</p>
         <p className="text-sm font-medium text-primary">{user?.email ?? "..."}</p>
       </div>
+
+      <LogoUpload currentLogoUrl={settings?.logo_url || null} />
 
       <form action={updateCompanySettings} className="card p-5 space-y-4">
         <div>
