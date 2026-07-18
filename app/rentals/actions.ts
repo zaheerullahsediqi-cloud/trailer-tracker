@@ -1,11 +1,11 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { addDays } from "@/lib/date";
+import { advanceByPeriod } from "@/lib/date";
 
 function periodToDays(period: string, customDays?: number) {
   if (period === "weekly") return 7;
-  if (period === "monthly") return 30;
+  if (period === "monthly") return 30; // informational only; monthly advancement uses real calendar months, not this count
   return customDays && customDays > 0 ? customDays : 30;
 }
 
@@ -19,7 +19,7 @@ export async function createRental(formData: FormData) {
   const rate = Number(formData.get("rate") || 0);
 
   const period_days = periodToDays(period, customDays);
-  const next_due_date = addDays(start_date, period_days);
+  const next_due_date = advanceByPeriod(start_date, period, period_days);
 
   const { error } = await supabase.from("rentals").insert({
     trailer_id,
@@ -66,10 +66,11 @@ export async function advanceDueDate(id: string) {
   const supabase = createClient();
   const { data: rental } = await supabase.from("rentals").select("*").eq("id", id).single();
   if (!rental) throw new Error("Rental not found");
-  const next_due_date = addDays(rental.next_due_date, rental.period_days);
+  const next_due_date = advanceByPeriod(rental.next_due_date, rental.period, rental.period_days);
   const { error } = await supabase.from("rentals").update({ next_due_date }).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath(`/rentals/${id}`);
+  revalidatePath("/rentals");
   revalidatePath("/");
 }
 

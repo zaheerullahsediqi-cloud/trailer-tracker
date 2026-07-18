@@ -2,7 +2,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { generateInvoicePdf } from "@/lib/invoice";
 import { getResend, FROM_EMAIL, COMPANY_NAME, OWNER_EMAIL } from "@/lib/resend";
-import { addDays } from "@/lib/date";
+import { advanceByPeriod } from "@/lib/date";
 import { revalidatePath } from "next/cache";
 
 async function loadRentalBundle(rentalId: string) {
@@ -21,7 +21,7 @@ export async function sendInvoiceEmail(rentalId: string) {
   const supabase = createClient();
 
   const periodStart = rental.next_due_date; // billing for the upcoming period
-  const periodEnd = addDays(rental.next_due_date, rental.period_days);
+  const periodEnd = advanceByPeriod(rental.next_due_date, rental.period, rental.period_days);
 
   const { count } = await supabase
     .from("invoices")
@@ -78,6 +78,7 @@ export async function sendInvoiceEmail(rentalId: string) {
   });
 
   revalidatePath(`/rentals/${rentalId}`);
+  revalidatePath("/rentals");
 }
 
 export async function deleteRental(rentalId: string) {

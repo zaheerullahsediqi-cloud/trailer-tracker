@@ -48,24 +48,29 @@ export default async function Dashboard() {
   const occupancyRate = totalTrailers > 0 ? Math.round((rentedTrailerIds.size / totalTrailers) * 100) : 0;
   const monthlyRevenue = list.reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
   const outstandingBalance = overdue.reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
+  const upcomingDueAmount = dueSoon.reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
 
-  // Build last-6-months revenue series from real invoice sends
-  const now = new Date();
+  // Build last-6-months revenue series from real invoice sends.
+  // Bucketed in UTC throughout so a send near a month boundary can't land
+  // in the wrong bucket depending on the viewer's local timezone.
+  const nowUtc = new Date();
   const months: { key: string; month: string; revenue: number }[] = [];
   for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const y = nowUtc.getUTCFullYear();
+    const m = nowUtc.getUTCMonth() - i;
+    const d = new Date(Date.UTC(y, m, 1));
     months.push({
-      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
-      month: d.toLocaleString("en-US", { month: "short" }),
+      key: `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`,
+      month: d.toLocaleString("en-US", { month: "short", timeZone: "UTC" }),
       revenue: 0,
     });
   }
   (invoices ?? []).forEach((inv: any) => {
     if (!inv.sent_at) return;
     const d = new Date(inv.sent_at);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
     const bucket = months.find((m) => m.key === key);
-    if (bucket) bucket.revenue += Number(inv.amount || 0);
+    if (bucket) bucket.revenue += parseFloat(inv.amount) || 0;
   });
 
   const stats = [
@@ -95,7 +100,7 @@ export default async function Dashboard() {
     },
     {
       label: "Upcoming Due",
-      value: dueSoon.length,
+      value: `$${upcomingDueAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
       icon: Clock,
       tint: "bg-warning/10 text-warning",
     },

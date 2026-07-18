@@ -66,7 +66,7 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
 
       <div className="card p-5">
         <p className="eyebrow mb-3">Invoicing</p>
-        <InvoiceActions rentalId={rental.id} />
+        <InvoiceActions rentalId={rental.id} nextDueDate={rental.next_due_date} />
         <div className="mt-4 space-y-1.5">
           {(invoices ?? []).map((inv: any) => (
             <p key={inv.id} className="text-sm text-muted">
