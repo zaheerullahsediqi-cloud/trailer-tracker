@@ -5,6 +5,7 @@ import MobileNav from "./mobile-nav";
 import TopBar from "./top-bar";
 import ThemeScript from "./theme-script";
 import { createClient } from "@/lib/supabase/server";
+import { syncNotifications } from "@/lib/notifications";
 
 export const metadata: Metadata = {
   title: "Trailer Tracker",
@@ -23,17 +24,13 @@ export default async function RootLayout({
 
   let alertCount = 0;
   if (user) {
-    const { data: rentals } = await supabase
-      .from("rentals")
-      .select("next_due_date")
-      .eq("status", "active");
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    alertCount = (rentals ?? []).filter((r: any) => {
-      const due = new Date(r.next_due_date);
-      const days = Math.round((due.getTime() - today.getTime()) / 86400000);
-      return days <= 5;
-    }).length;
+    await syncNotifications(supabase);
+    const { count } = await supabase
+      .from("notifications")
+      .select("*", { count: "exact", head: true })
+      .is("read_at", null)
+      .is("dismissed_at", null);
+    alertCount = count ?? 0;
   }
 
   return (

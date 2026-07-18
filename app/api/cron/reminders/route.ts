@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { getResend, FROM_EMAIL, COMPANY_NAME, OWNER_EMAIL } from "@/lib/resend";
+import { syncNotifications } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,8 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = createAdminClient();
+  await syncNotifications(supabase);
+
   const in3Days = new Date();
   in3Days.setDate(in3Days.getDate() + 3);
   const cutoff = in3Days.toISOString().slice(0, 10);

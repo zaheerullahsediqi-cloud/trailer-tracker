@@ -1,7 +1,8 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
 import { generateInvoicePdf } from "@/lib/invoice";
-import { getResend, FROM_EMAIL, COMPANY_NAME, OWNER_EMAIL } from "@/lib/resend";
+import { getResend, FROM_EMAIL } from "@/lib/resend";
+import { getCompanySettings } from "@/lib/settings";
 import { advanceByPeriod } from "@/lib/date";
 import { revalidatePath } from "next/cache";
 
@@ -19,6 +20,7 @@ async function loadRentalBundle(rentalId: string) {
 export async function sendInvoiceEmail(rentalId: string) {
   const rental = await loadRentalBundle(rentalId);
   const supabase = createClient();
+  const { companyName, contactEmail } = await getCompanySettings(supabase);
 
   const periodStart = rental.next_due_date; // billing for the upcoming period
   const periodEnd = advanceByPeriod(rental.next_due_date, rental.period, rental.period_days);
@@ -31,8 +33,8 @@ export async function sendInvoiceEmail(rentalId: string) {
 
   const pdfBytes = await generateInvoicePdf({
     invoiceNumber,
-    companyName: COMPANY_NAME,
-    companyEmail: OWNER_EMAIL,
+    companyName,
+    companyEmail: contactEmail,
     trailer: rental.trailers,
     renter: rental.renters,
     periodStart,
@@ -50,7 +52,7 @@ export async function sendInvoiceEmail(rentalId: string) {
     from: FROM_EMAIL,
     to: rental.renters.email,
     subject: `Invoice ${invoiceNumber} — Trailer ${rental.trailers.vin}`,
-    text: `Hi ${rental.renters.name},\n\nPlease find attached your invoice for trailer ${rental.trailers.vin} (${rental.trailers.make} ${rental.trailers.model}) for the period ${periodStart} to ${periodEnd}.\n\nAmount due: $${Number(rental.rate).toFixed(2)}\nDue date: ${rental.next_due_date}\n\nThank you,\n${COMPANY_NAME}`,
+    text: `Hi ${rental.renters.name},\n\nPlease find attached your invoice for trailer ${rental.trailers.vin} (${rental.trailers.make} ${rental.trailers.model}) for the period ${periodStart} to ${periodEnd}.\n\nAmount due: $${Number(rental.rate).toFixed(2)}\nDue date: ${rental.next_due_date}\n\nThank you,\n${companyName}`,
     attachments: [
       {
         filename: `invoice-${invoiceNumber}.pdf`,

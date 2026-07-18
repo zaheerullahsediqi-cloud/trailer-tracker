@@ -69,7 +69,7 @@ export default function TopBar({
             <div className="absolute right-0 mt-2 w-64 card p-3 z-30 animate-in">
               <p className="text-xs text-muted mb-2">
                 {alertCount > 0
-                  ? `${alertCount} rental${alertCount === 1 ? "" : "s"} need attention`
+                  ? `${alertCount} unread notification${alertCount === 1 ? "" : "s"}`
                   : "You're all caught up"}
               </p>
               <Link
