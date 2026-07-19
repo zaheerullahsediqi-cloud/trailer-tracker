@@ -52,6 +52,14 @@ export default function TrailerRow({ trailer }: { trailer: any }) {
           <input name="plate" defaultValue={trailer.plate ?? ""} className="input" />
         </div>
         <div>
+          <label className="label">Title #</label>
+          <input name="title_number" defaultValue={trailer.title_number ?? ""} className="input" />
+        </div>
+        <div>
+          <label className="label">Plate type</label>
+          <input name="plate_type" defaultValue={trailer.plate_type ?? ""} className="input" />
+        </div>
+        <div>
           <label className="label">Status</label>
           <select name="status" defaultValue={trailer.status ?? "available"} className="input">
             <option value="available">Available</option>

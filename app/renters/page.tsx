@@ -29,6 +29,14 @@ export default async function RentersPage() {
           <label className="label">Email</label>
           <input name="email" type="email" className="input" />
         </div>
+        <div>
+          <label className="label">Driver's license # (optional, for lease agreements)</label>
+          <input name="drivers_license" className="input" />
+        </div>
+        <div>
+          <label className="label">Date of birth (optional, for lease agreements)</label>
+          <input name="date_of_birth" type="date" className="input" />
+        </div>
         <div className="sm:col-span-2">
           <label className="label">Address</label>
           <input name="address" className="input" />

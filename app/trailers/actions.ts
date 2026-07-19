@@ -11,10 +11,12 @@ export async function addTrailer(formData: FormData) {
   const plate = String(formData.get("plate") || "").trim() || null;
   const unit_number = String(formData.get("unit_number") || "").trim() || null;
   const status = String(formData.get("status") || "available");
+  const title_number = String(formData.get("title_number") || "").trim() || null;
+  const plate_type = String(formData.get("plate_type") || "").trim() || null;
 
   const { error } = await supabase
     .from("trailers")
-    .insert({ vin, make, model, year, plate, unit_number, status });
+    .insert({ vin, make, model, year, plate, unit_number, status, title_number, plate_type });
   if (error) throw new Error(error.message);
   revalidatePath("/trailers");
 }
@@ -28,10 +30,12 @@ export async function updateTrailer(id: string, formData: FormData) {
   const plate = String(formData.get("plate") || "").trim() || null;
   const unit_number = String(formData.get("unit_number") || "").trim() || null;
   const status = String(formData.get("status") || "available");
+  const title_number = String(formData.get("title_number") || "").trim() || null;
+  const plate_type = String(formData.get("plate_type") || "").trim() || null;
 
   const { error } = await supabase
     .from("trailers")
-    .update({ vin, make, model, year, plate, unit_number, status })
+    .update({ vin, make, model, year, plate, unit_number, status, title_number, plate_type })
     .eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/trailers");

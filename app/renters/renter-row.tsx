@@ -33,6 +33,14 @@ export default function RenterRow({ renter }: { renter: any }) {
           <label className="label">Email</label>
           <input name="email" type="email" defaultValue={renter.email ?? ""} className="input" />
         </div>
+        <div>
+          <label className="label">Driver's license #</label>
+          <input name="drivers_license" defaultValue={renter.drivers_license ?? ""} className="input" />
+        </div>
+        <div>
+          <label className="label">Date of birth</label>
+          <input name="date_of_birth" type="date" defaultValue={renter.date_of_birth ?? ""} className="input" />
+        </div>
         <div className="sm:col-span-2">
           <label className="label">Address</label>
           <input name="address" defaultValue={renter.address ?? ""} className="input" />

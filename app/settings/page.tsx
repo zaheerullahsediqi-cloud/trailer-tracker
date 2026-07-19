@@ -49,6 +49,15 @@ export default async function SettingsPage() {
             placeholder="billing@yourcompany.com"
           />
         </div>
+        <div>
+          <label className="label">Company address (shown on lease agreements)</label>
+          <input
+            name="company_address"
+            className="input"
+            defaultValue={settings?.company_address || ""}
+            placeholder="8710 Datapoint Dr, San Antonio, TX 78229"
+          />
+        </div>
         <button className="btn-primary">Save company info</button>
       </form>
 
