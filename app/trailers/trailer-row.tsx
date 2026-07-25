@@ -23,6 +23,7 @@ const paymentBadge: Record<string, string> = {
 
 export default function TrailerRow({ trailer }: { trailer: any }) {
   const [editing, setEditing] = useState(false);
+  const [showBillOfSale, setShowBillOfSale] = useState(false);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
   const rental = trailer.rental;
@@ -146,6 +147,9 @@ export default function TrailerRow({ trailer }: { trailer: any }) {
         <button className="btn-secondary text-xs" onClick={() => setEditing(true)}>
           Edit
         </button>
+        <button className="btn-secondary text-xs" onClick={() => setShowBillOfSale((v) => !v)}>
+          {showBillOfSale ? "Cancel" : "Bill of sale"}
+        </button>
         <button
           className="btn-danger text-xs"
           onClick={() => {
@@ -157,6 +161,58 @@ export default function TrailerRow({ trailer }: { trailer: any }) {
           Delete
         </button>
       </div>
+
+      {showBillOfSale && (
+        <form
+          method="GET"
+          action={`/api/bill-of-sale/${trailer.id}`}
+          target="_blank"
+          className="border border-border dark:border-slate-700 rounded-lg p-4 space-y-3"
+        >
+          <p className="text-xs font-semibold text-muted uppercase tracking-wide">Generate Bill of Sale</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">Buyer name</label>
+              <input name="buyer_name" required className="input" />
+            </div>
+            <div>
+              <label className="label">Buyer address</label>
+              <input name="buyer_address" className="input" />
+            </div>
+            <div>
+              <label className="label">Sale price ($)</label>
+              <input name="sale_price" type="number" step="0.01" required className="input" />
+            </div>
+            <div>
+              <label className="label">Sale date</label>
+              <input
+                name="sale_date"
+                type="date"
+                defaultValue={new Date().toISOString().slice(0, 10)}
+                className="input"
+              />
+            </div>
+            <div>
+              <label className="label">Payment method</label>
+              <select name="payment_method" defaultValue="Cash" className="input">
+                <option value="Cash">Cash</option>
+                <option value="Check">Check</option>
+                <option value="Zelle">Zelle</option>
+                <option value="ACH / Bank Transfer">ACH / Bank Transfer</option>
+                <option value="Financed">Financed</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">Notes (optional)</label>
+              <input name="notes" className="input" placeholder="e.g. sold with spare tire" />
+            </div>
+          </div>
+          <button type="submit" className="btn-primary text-xs">
+            Generate &amp; preview PDF
+          </button>
+        </form>
+      )}
     </div>
   );
 }
