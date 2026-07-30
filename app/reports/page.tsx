@@ -23,7 +23,6 @@ export default async function ReportsPage() {
     .reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
   const collectedTotal = (invoices ?? []).reduce((sum: number, i: any) => sum + (parseFloat(i.amount) || 0), 0);
 
-  // Revenue by trailer (top 8, by invoiced amount; falls back to rate if no invoices yet)
   const revenueByVin = new Map<string, number>();
   (invoices ?? []).forEach((inv: any) => {
     const vin = inv.rentals?.trailers?.vin;
@@ -42,7 +41,6 @@ export default async function ReportsPage() {
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 8);
 
-  // Revenue trend + payment history, same month buckets
   const nowUtc = new Date();
   const months: { key: string; month: string; revenue: number; count: number }[] = [];
   for (let i = 5; i >= 0; i--) {

@@ -27,10 +27,10 @@ create table rentals (
   trailer_id uuid not null references trailers(id) on delete cascade,
   renter_id uuid not null references renters(id) on delete cascade,
   start_date date not null,
-  period text not null default 'monthly', -- weekly | monthly | custom
+  period text not null default 'monthly',
   period_days int not null default 30,
   rate numeric(10,2) not null default 0,
-  status text not null default 'active', -- active | completed | cancelled
+  status text not null default 'active',
   next_due_date date not null,
   contract_url text,
   contract_filename text,
@@ -48,7 +48,6 @@ create table invoices (
   created_at timestamptz not null default now()
 );
 
--- Row Level Security: only authenticated users (your single login) can read/write.
 alter table trailers enable row level security;
 alter table renters enable row level security;
 alter table rentals enable row level security;
@@ -59,7 +58,10 @@ create policy "auth full access" on renters for all using (auth.role() = 'authen
 create policy "auth full access" on rentals for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "auth full access" on invoices for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 
--- Storage bucket for contract PDFs (create via SQL so policies apply)
+grant usage on schema public to authenticated;
+grant all on all tables in schema public to authenticated;
+grant all on all sequences in schema public to authenticated;
+
 insert into storage.buckets (id, name, public) values ('contracts', 'contracts', false)
 on conflict (id) do nothing;
 

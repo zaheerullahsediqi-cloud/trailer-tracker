@@ -8,8 +8,13 @@ export async function addRenter(formData: FormData) {
   const address = String(formData.get("address") || "").trim() || null;
   const phone = String(formData.get("phone") || "").trim() || null;
   const email = String(formData.get("email") || "").trim() || null;
+  const drivers_license = String(formData.get("drivers_license") || "").trim() || null;
+  const dobRaw = String(formData.get("date_of_birth") || "");
+  const date_of_birth = dobRaw || null;
 
-  const { error } = await supabase.from("renters").insert({ name, address, phone, email });
+  const { error } = await supabase
+    .from("renters")
+    .insert({ name, address, phone, email, drivers_license, date_of_birth });
   if (error) throw new Error(error.message);
   revalidatePath("/renters");
 }
@@ -20,10 +25,13 @@ export async function updateRenter(id: string, formData: FormData) {
   const address = String(formData.get("address") || "").trim() || null;
   const phone = String(formData.get("phone") || "").trim() || null;
   const email = String(formData.get("email") || "").trim() || null;
+  const drivers_license = String(formData.get("drivers_license") || "").trim() || null;
+  const dobRaw = String(formData.get("date_of_birth") || "");
+  const date_of_birth = dobRaw || null;
 
   const { error } = await supabase
     .from("renters")
-    .update({ name, address, phone, email })
+    .update({ name, address, phone, email, drivers_license, date_of_birth })
     .eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/renters");

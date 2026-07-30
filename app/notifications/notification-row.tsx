@@ -11,18 +11,12 @@ export default function NotificationRow({ notif }: { notif: any }) {
   const iconColor = notif.type === "overdue" ? "text-danger" : "text-warning";
 
   return (
-    <div
-      className={`flex items-start justify-between gap-4 px-5 py-4 ${
-        isRead ? "opacity-60" : ""
-      }`}
-    >
+    <div className={`flex items-start justify-between gap-4 px-5 py-4 ${isRead ? "opacity-60" : ""}`}>
       <div className="flex items-start gap-3 min-w-0">
         <Icon size={16} className={`${iconColor} mt-0.5 shrink-0`} />
         <div className="min-w-0">
           <p className="text-sm text-primary">{notif.message}</p>
-          <p className="text-xs text-muted mt-0.5">
-            {new Date(notif.created_at).toLocaleString()}
-          </p>
+          <p className="text-xs text-muted mt-0.5">{new Date(notif.created_at).toLocaleString()}</p>
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">

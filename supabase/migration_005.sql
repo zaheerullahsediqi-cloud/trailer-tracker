@@ -1,10 +1,6 @@
--- Run this in Supabase: SQL Editor > New query > paste > Run
-
+-- Logo support
 alter table company_settings add column if not exists logo_url text;
 
--- Public bucket so the logo can be shown in the sidebar and embedded in
--- invoice PDFs without needing signed URLs. Only your logo goes here —
--- keep contracts in the private 'contracts' bucket, unaffected by this.
 insert into storage.buckets (id, name, public) values ('branding', 'branding', true)
 on conflict (id) do nothing;
 

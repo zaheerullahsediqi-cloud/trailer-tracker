@@ -53,6 +53,14 @@ export default async function TrailersPage() {
           <input name="plate" className="input" />
         </div>
         <div>
+          <label className="label">Title # (optional, for lease agreements)</label>
+          <input name="title_number" className="input" />
+        </div>
+        <div>
+          <label className="label">Plate type (optional, for lease agreements)</label>
+          <input name="plate_type" className="input" placeholder="e.g. Commercial (Non-Expiring) Trailer" />
+        </div>
+        <div>
           <label className="label">Status</label>
           <select name="status" className="input" defaultValue="available">
             <option value="available">Available</option>

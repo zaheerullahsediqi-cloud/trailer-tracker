@@ -6,9 +6,6 @@ import MarkAllButton from "./mark-all-button";
 export default async function NotificationsPage() {
   const supabase = createClient();
 
-  // Self-healing: generates any new notification rows for rentals that are
-  // currently overdue/due-soon. Safe to call every time this page loads —
-  // it never duplicates or resurrects a notification you already dismissed.
   await syncNotifications(supabase);
 
   const { data: notifications } = await supabase

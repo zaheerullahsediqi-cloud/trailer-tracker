@@ -6,7 +6,6 @@ import { syncNotifications } from "@/lib/notifications";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  // Vercel Cron sends this header automatically; also allow a manual secret for testing.
   const authHeader = req.headers.get("authorization");
   if (
     process.env.CRON_SECRET &&
