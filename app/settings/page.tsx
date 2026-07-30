@@ -27,7 +27,9 @@ export default async function SettingsPage() {
       <form action={updateCompanySettings} className="card p-5 space-y-4">
         <div>
           <p className="eyebrow">Company info</p>
-          <p className="text-xs text-muted mt-1">Shown on invoices sent to customers.</p>
+          <p className="text-xs text-muted mt-1">
+            Shown on invoices sent to customers.
+          </p>
         </div>
         <div>
           <label className="label">Company name</label>
@@ -47,15 +49,6 @@ export default async function SettingsPage() {
             className="input"
             defaultValue={settings?.contact_email || ""}
             placeholder="billing@yourcompany.com"
-          />
-        </div>
-        <div>
-          <label className="label">Company address (shown on lease agreements)</label>
-          <input
-            name="company_address"
-            className="input"
-            defaultValue={settings?.company_address || ""}
-            placeholder="8710 Datapoint Dr, San Antonio, TX 78229"
           />
         </div>
         <button className="btn-primary">Save company info</button>

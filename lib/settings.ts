@@ -4,7 +4,6 @@ export async function getCompanySettings(supabase: any) {
     companyName: data?.company_name || process.env.COMPANY_NAME || "Trailer Tracker",
     contactEmail: data?.contact_email || process.env.OWNER_EMAIL || "",
     logoUrl: data?.logo_url || null,
-    companyAddress: data?.company_address || "",
   };
 }
 

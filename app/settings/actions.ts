@@ -18,20 +18,17 @@ export async function updateCompanySettings(formData: FormData) {
   const supabase = createClient();
   const company_name = String(formData.get("company_name") || "").trim() || "Your Company";
   const contact_email = String(formData.get("contact_email") || "").trim() || null;
-  const company_address = String(formData.get("company_address") || "").trim() || null;
 
   const { data: existing } = await supabase.from("company_settings").select("id").limit(1).maybeSingle();
 
   if (existing) {
     const { error } = await supabase
       .from("company_settings")
-      .update({ company_name, contact_email, company_address, updated_at: new Date().toISOString() })
+      .update({ company_name, contact_email, updated_at: new Date().toISOString() })
       .eq("id", existing.id);
     if (error) throw new Error(error.message);
   } else {
-    const { error } = await supabase
-      .from("company_settings")
-      .insert({ company_name, contact_email, company_address });
+    const { error } = await supabase.from("company_settings").insert({ company_name, contact_email });
     if (error) throw new Error(error.message);
   }
   revalidatePath("/settings");
@@ -45,5 +42,7 @@ export async function updateCompanyLogo(logoUrl: string | null) {
     .update({ logo_url: logoUrl, updated_at: new Date().toISOString() })
     .eq("id", id);
   if (error) throw new Error(error.message);
+  // The logo shows in the sidebar on every page, so bust the whole layout.
   revalidatePath("/", "layout");
 }
+
