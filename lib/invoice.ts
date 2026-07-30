@@ -1,4 +1,5 @@
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { safeText } from "./pdf-text";
 
 export async function generateInvoicePdf(params: {
   invoiceNumber: string;
@@ -14,18 +15,36 @@ export async function generateInvoicePdf(params: {
   dueDate: string;
 }): Promise<Uint8Array> {
   const {
-    invoiceNumber,
-    companyName,
-    companyEmail,
+    invoiceNumber: rawInvoiceNumber,
+    companyName: rawCompanyName,
+    companyEmail: rawCompanyEmail,
     logoBytes,
     logoContentType,
-    trailer,
-    renter,
+    trailer: rawTrailer,
+    renter: rawRenter,
     periodStart,
     periodEnd,
     rate,
     dueDate,
   } = params;
+
+  // Sanitize every dynamic/user-provided field once, up front, so nothing
+  // downstream needs to think about encoding safety.
+  const invoiceNumber = safeText(rawInvoiceNumber);
+  const companyName = safeText(rawCompanyName);
+  const companyEmail = rawCompanyEmail ? safeText(rawCompanyEmail) : undefined;
+  const trailer = {
+    vin: safeText(rawTrailer.vin),
+    make: safeText(rawTrailer.make),
+    model: safeText(rawTrailer.model),
+    year: rawTrailer.year,
+  };
+  const renter = {
+    name: safeText(rawRenter.name),
+    address: rawRenter.address ? safeText(rawRenter.address) : null,
+    phone: rawRenter.phone ? safeText(rawRenter.phone) : null,
+    email: rawRenter.email ? safeText(rawRenter.email) : null,
+  };
 
   const doc = await PDFDocument.create();
   const page = doc.addPage([612, 792]); // Letter

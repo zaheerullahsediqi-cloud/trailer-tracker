@@ -1,4 +1,5 @@
 import { PDFDocument, PDFPage, PDFFont, rgb, StandardFonts } from "pdf-lib";
+import { safeText } from "./pdf-text";
 
 const PAGE_WIDTH = 612;
 const PAGE_HEIGHT = 792;
@@ -49,6 +50,7 @@ class DocWriter {
   }
 
   heading(text: string) {
+    text = safeText(text);
     this.ensureSpace(30);
     this.y -= 6;
     this.page.drawText(text, { x: MARGIN, y: this.y, size: 13, font: this.bold, color: black });
@@ -63,6 +65,7 @@ class DocWriter {
   }
 
   paragraph(text: string, opts: { size?: number; bold?: boolean; color?: any } = {}) {
+    text = safeText(text);
     const size = opts.size ?? 10.5;
     const f = opts.bold ? this.bold : this.font;
     const color = opts.color ?? black;
@@ -76,6 +79,8 @@ class DocWriter {
   }
 
   bullet(label: string, value: string) {
+    label = safeText(label);
+    value = safeText(value);
     const size = 10.5;
     this.ensureSpace(size + 6);
     this.page.drawText("•", { x: MARGIN, y: this.y, size, font: this.font, color: black });
@@ -125,6 +130,30 @@ export async function generateLeaseAgreementPdf(params: {
   govCounty: string;
   signDate: string;
 }): Promise<Uint8Array> {
+  // Sanitize every dynamic/user-provided field once, up front, so nothing
+  // downstream needs to think about encoding safety.
+  params = {
+    ...params,
+    companyName: safeText(params.companyName),
+    companyAddress: safeText(params.companyAddress),
+    renterName: safeText(params.renterName),
+    renterAddress: safeText(params.renterAddress),
+    driversLicense: safeText(params.driversLicense),
+    dateOfBirth: safeText(params.dateOfBirth),
+    trailer: {
+      vin: safeText(params.trailer.vin),
+      make: safeText(params.trailer.make),
+      model: safeText(params.trailer.model),
+      year: params.trailer.year,
+      plate: params.trailer.plate ? safeText(params.trailer.plate) : null,
+      titleNumber: params.trailer.titleNumber ? safeText(params.trailer.titleNumber) : null,
+      plateType: params.trailer.plateType ? safeText(params.trailer.plateType) : null,
+    },
+    inspectionLocation: safeText(params.inspectionLocation),
+    govState: safeText(params.govState),
+    govCounty: safeText(params.govCounty),
+  };
+
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
