@@ -22,15 +22,27 @@ export default async function TrailersPage() {
   const rentalByTrailer = new Map<string, any>();
   (activeRentals ?? []).forEach((r: any) => rentalByTrailer.set(r.trailer_id, r));
 
-  const enriched = (trailers ?? []).map((t: any) => {
-    const rental = rentalByTrailer.get(t.id);
-    let paymentStatus: "Paid up" | "Due Soon" | "Overdue" | null = null;
-    if (rental) {
-      const d = daysUntil(rental.next_due_date);
-      paymentStatus = d < 0 ? "Overdue" : d <= 5 ? "Due Soon" : "Paid up";
-    }
-    return { ...t, rental, paymentStatus };
-  });
+  const enriched = await Promise.all(
+    (trailers ?? []).map(async (t: any) => {
+      const rental = rentalByTrailer.get(t.id);
+      let paymentStatus: "Paid up" | "Due Soon" | "Overdue" | null = null;
+      if (rental) {
+        const d = daysUntil(rental.next_due_date);
+        paymentStatus = d < 0 ? "Overdue" : d <= 5 ? "Due Soon" : "Paid up";
+      }
+      let registrationUrl: string | null = null;
+      let insuranceUrl: string | null = null;
+      if (t.registration_url) {
+        const { data } = await supabase.storage.from("documents").createSignedUrl(t.registration_url, 60 * 60);
+        registrationUrl = data?.signedUrl ?? null;
+      }
+      if (t.insurance_url) {
+        const { data } = await supabase.storage.from("documents").createSignedUrl(t.insurance_url, 60 * 60);
+        insuranceUrl = data?.signedUrl ?? null;
+      }
+      return { ...t, rental, paymentStatus, registrationUrl, insuranceUrl };
+    })
+  );
 
   return (
     <div className="space-y-8">

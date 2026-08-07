@@ -47,3 +47,35 @@ export async function deleteTrailer(id: string) {
   if (error) throw new Error(error.message);
   revalidatePath("/trailers");
 }
+
+export async function uploadTrailerDocument(
+  trailerId: string,
+  docType: "registration" | "insurance",
+  path: string,
+  filename: string
+) {
+  const supabase = createClient();
+  const update =
+    docType === "registration"
+      ? { registration_url: path, registration_filename: filename }
+      : { insurance_url: path, insurance_filename: filename };
+  const { error } = await supabase.from("trailers").update(update).eq("id", trailerId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/trailers");
+}
+
+export async function deleteTrailerDocument(
+  trailerId: string,
+  docType: "registration" | "insurance",
+  path: string
+) {
+  const supabase = createClient();
+  await supabase.storage.from("documents").remove([path]);
+  const update =
+    docType === "registration"
+      ? { registration_url: null, registration_filename: null }
+      : { insurance_url: null, insurance_filename: null };
+  const { error } = await supabase.from("trailers").update(update).eq("id", trailerId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/trailers");
+}

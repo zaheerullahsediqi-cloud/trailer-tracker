@@ -23,7 +23,7 @@ export async function sendInvoiceEmail(rentalId: string) {
   const { companyName, contactEmail, logoUrl } = await getCompanySettings(supabase);
   const logo = await fetchLogoForPdf(logoUrl);
 
-  const periodStart = rental.next_due_date; // billing for the upcoming period
+  const periodStart = rental.next_due_date;
   const periodEnd = advanceByPeriod(rental.next_due_date, rental.period, rental.period_days);
 
   const { count } = await supabase
@@ -65,8 +65,6 @@ export async function sendInvoiceEmail(rentalId: string) {
   });
 
   if (sendError) {
-    // Resend returns {error} instead of throwing — surface it so the UI
-    // doesn't show "Invoice sent" when it wasn't.
     throw new Error(`Resend rejected the email: ${sendError.message || JSON.stringify(sendError)}`);
   }
   if (!sendData?.id) {

@@ -8,8 +8,6 @@ export async function getCompanySettings(supabase: any) {
   };
 }
 
-// Fetches the logo image bytes for embedding into a PDF. Returns null on
-// any failure so a broken/unreachable logo never breaks invoice generation.
 export async function fetchLogoForPdf(
   logoUrl: string | null
 ): Promise<{ bytes: Uint8Array; contentType: string } | null> {

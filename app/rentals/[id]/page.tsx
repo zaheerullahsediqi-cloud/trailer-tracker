@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import ContractUpload from "./contract-upload";
+import LicenseUpload from "@/app/renters/[id]/license-upload";
+import TrailerDocuments from "@/app/trailers/trailer-documents";
 import InvoiceActions from "./invoice-actions";
 import RentalControls from "./rental-controls";
 import RentalTermsEdit from "./rental-terms-edit";
@@ -25,6 +27,30 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
       .from("contracts")
       .createSignedUrl(rental.contract_url, 60 * 60);
     contractUrl = data?.signedUrl ?? null;
+  }
+
+  let licenseUrl: string | null = null;
+  if (rental.renters.license_document_url) {
+    const { data } = await supabase.storage
+      .from("documents")
+      .createSignedUrl(rental.renters.license_document_url, 60 * 60);
+    licenseUrl = data?.signedUrl ?? null;
+  }
+
+  let registrationUrl: string | null = null;
+  if (rental.trailers.registration_url) {
+    const { data } = await supabase.storage
+      .from("documents")
+      .createSignedUrl(rental.trailers.registration_url, 60 * 60);
+    registrationUrl = data?.signedUrl ?? null;
+  }
+
+  let insuranceUrl: string | null = null;
+  if (rental.trailers.insurance_url) {
+    const { data } = await supabase.storage
+      .from("documents")
+      .createSignedUrl(rental.trailers.insurance_url, 60 * 60);
+    insuranceUrl = data?.signedUrl ?? null;
   }
 
   const { data: invoices } = await supabase
@@ -110,22 +136,11 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className="label">Lease start date</label>
-            <input
-              name="lease_start_date"
-              type="date"
-              defaultValue={rental.start_date}
-              className="input"
-            />
+            <input name="lease_start_date" type="date" defaultValue={rental.start_date} className="input" />
           </div>
           <div>
             <label className="label">Lease term (months)</label>
-            <input
-              name="lease_months"
-              type="number"
-              defaultValue={defaultLeaseMonths}
-              min={1}
-              className="input"
-            />
+            <input name="lease_months" type="number" defaultValue={defaultLeaseMonths} min={1} className="input" />
           </div>
           <div>
             <label className="label">Early termination notice (days)</label>
@@ -133,11 +148,7 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
           </div>
           <div>
             <label className="label">Inspection location</label>
-            <input
-              name="inspection_location"
-              className="input"
-              placeholder="e.g. TA Travel Center"
-            />
+            <input name="inspection_location" className="input" placeholder="e.g. TA Travel Center" />
           </div>
           <div>
             <label className="label">Renter's driver's license #</label>
@@ -150,12 +161,7 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
           </div>
           <div>
             <label className="label">Renter's date of birth</label>
-            <input
-              name="dob"
-              type="date"
-              defaultValue={rental.renters.date_of_birth ?? ""}
-              className="input"
-            />
+            <input name="dob" type="date" defaultValue={rental.renters.date_of_birth ?? ""} className="input" />
           </div>
           <div>
             <label className="label">Governing law — state</label>
@@ -171,13 +177,48 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
         </button>
       </form>
 
-      <div className="card p-5">
-        <p className="eyebrow mb-3">Contract</p>
-        <ContractUpload
-          rentalId={rental.id}
-          existingUrl={contractUrl}
-          existingFilename={rental.contract_filename}
-        />
+      <div className="card p-5 space-y-5">
+        <p className="eyebrow">Documents</p>
+
+        <div>
+          <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Signed Contract</p>
+          <ContractUpload
+            rentalId={rental.id}
+            existingUrl={contractUrl}
+            existingFilename={rental.contract_filename}
+          />
+        </div>
+
+        <div className="pt-4 border-t border-border dark:border-slate-800">
+          <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">
+            Renter's Driver's License
+          </p>
+          <LicenseUpload
+            renterId={rental.renters.id}
+            existingUrl={licenseUrl}
+            existingFilename={rental.renters.license_document_filename}
+            existingPath={rental.renters.license_document_url}
+          />
+        </div>
+
+        <div className="pt-4 border-t border-border dark:border-slate-800">
+          <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">
+            Trailer Registration &amp; Insurance
+          </p>
+          <TrailerDocuments
+            trailerId={rental.trailers.id}
+            registration={{
+              url: registrationUrl,
+              filename: rental.trailers.registration_filename,
+              path: rental.trailers.registration_url,
+            }}
+            insurance={{
+              url: insuranceUrl,
+              filename: rental.trailers.insurance_filename,
+              path: rental.trailers.insurance_url,
+            }}
+          />
+        </div>
       </div>
 
       <div className="card p-5">

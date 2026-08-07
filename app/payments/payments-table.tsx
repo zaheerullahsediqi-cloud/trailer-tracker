@@ -20,12 +20,7 @@ export default function PaymentsTable({ rows }: { rows: PaymentRow[] }) {
   const columns: Column<PaymentRow>[] = [
     { key: "vin", label: "VIN", render: (r) => <span className="plate">{r.vin}</span> },
     { key: "renter", label: "Customer" },
-    {
-      key: "rate",
-      label: "Amount",
-      render: (r) => `$${r.rate.toFixed(2)}`,
-      sortValue: (r) => r.rate,
-    },
+    { key: "rate", label: "Amount", render: (r) => `$${r.rate.toFixed(2)}`, sortValue: (r) => r.rate },
     { key: "next_due_date", label: "Due Date" },
     {
       key: "status",

@@ -27,7 +27,7 @@ export default async function SettingsPage() {
       <form action={updateCompanySettings} className="card p-5 space-y-4">
         <div>
           <p className="eyebrow">Company info</p>
-          <p className="text-xs text-muted mt-1">Shown on invoices sent to customers.</p>
+          <p className="text-xs text-muted mt-1">Shown on invoices and lease agreements.</p>
         </div>
         <div>
           <label className="label">Company name</label>

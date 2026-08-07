@@ -25,8 +25,6 @@ export function createClient() {
   );
 }
 
-// Service-role client for privileged server-only tasks (cron jobs, admin actions).
-// Never expose SUPABASE_SERVICE_ROLE_KEY to the browser.
 export function createAdminClient() {
   const { createClient: createRawClient } = require("@supabase/supabase-js");
   return createRawClient(

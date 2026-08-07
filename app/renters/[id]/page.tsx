@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import NotesEdit from "./notes-edit";
-import { FileText, Receipt, Clock, Wallet } from "lucide-react";
+import LicenseUpload from "./license-upload";
+import { FileText, Receipt, Clock, Wallet, Contact } from "lucide-react";
 
 function daysUntil(dateStr: string) {
   const today = new Date();
@@ -34,11 +35,20 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
     .eq("rentals.renter_id", params.id)
     .order("payment_date", { ascending: false });
 
+  let licenseUrl: string | null = null;
+  if (renter.license_document_url) {
+    const { data } = await supabase.storage
+      .from("documents")
+      .createSignedUrl(renter.license_document_url, 60 * 60);
+    licenseUrl = data?.signedUrl ?? null;
+  }
+
   const list = rentals ?? [];
   const activeRental = list.find((r: any) => r.status === "active");
   const balanceDue = list
     .filter((r: any) => r.status === "active" && daysUntil(r.next_due_date) < 0)
     .reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
+  const totalCollected = (payments ?? []).reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
 
   const contractRentals = list.filter((r: any) => r.contract_url);
   const documents = await Promise.all(
@@ -47,8 +57,6 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
       return { rentalId: r.id, vin: r.trailers?.vin, filename: r.contract_filename, url: data?.signedUrl };
     })
   );
-
-  const totalCollected = (payments ?? []).reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
 
   const timeline = [
     ...list.map((r: any) => ({
@@ -110,6 +118,18 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
           <p className="eyebrow mb-3">Notes</p>
           <NotesEdit renterId={renter.id} notes={renter.notes} />
         </div>
+      </div>
+
+      <div className="card p-5">
+        <p className="eyebrow mb-3 flex items-center gap-2">
+          <Contact size={14} /> Driver's License
+        </p>
+        <LicenseUpload
+          renterId={renter.id}
+          existingUrl={licenseUrl}
+          existingFilename={renter.license_document_filename}
+          existingPath={renter.license_document_url}
+        />
       </div>
 
       <div>
@@ -177,7 +197,7 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
       </div>
 
       <div>
-        <p className="section-title mb-3">Documents</p>
+        <p className="section-title mb-3">Contracts</p>
         <div className="card divide-y divide-border overflow-hidden">
           {documents.map(
             (doc) =>
@@ -193,7 +213,7 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
                 </a>
               )
           )}
-          {documents.length === 0 && <p className="text-sm text-muted px-5 py-4">No documents uploaded yet.</p>}
+          {documents.length === 0 && <p className="text-sm text-muted px-5 py-4">No contracts uploaded yet.</p>}
         </div>
       </div>
 

@@ -130,8 +130,6 @@ export async function generateLeaseAgreementPdf(params: {
   govCounty: string;
   signDate: string;
 }): Promise<Uint8Array> {
-  // Sanitize every dynamic/user-provided field once, up front, so nothing
-  // downstream needs to think about encoding safety.
   params = {
     ...params,
     companyName: safeText(params.companyName),
@@ -184,13 +182,7 @@ export async function generateLeaseAgreementPdf(params: {
   const titleX = logoImage ? MARGIN + 110 : MARGIN;
   w.page.drawText("COMMERCIAL TRAILER", { x: titleX, y: headerTop - 20, size: 22, font: bold, color: black });
   w.page.drawText("LEASE AGREEMENT", { x: titleX, y: headerTop - 44, size: 22, font: bold, color: black });
-  w.page.drawText(params.companyName.toUpperCase(), {
-    x: titleX,
-    y: headerTop - 62,
-    size: 9,
-    font,
-    color: gray,
-  });
+  w.page.drawText(params.companyName.toUpperCase(), { x: titleX, y: headerTop - 62, size: 9, font, color: gray });
 
   w.y = Math.min(logoBottom, headerTop - 80) - 10;
 

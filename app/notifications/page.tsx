@@ -5,7 +5,6 @@ import MarkAllButton from "./mark-all-button";
 
 export default async function NotificationsPage() {
   const supabase = createClient();
-
   await syncNotifications(supabase);
 
   const { data: notifications } = await supabase

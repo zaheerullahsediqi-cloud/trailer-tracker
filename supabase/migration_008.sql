@@ -1,5 +1,3 @@
--- Run this in Supabase: SQL Editor > New query > paste > Run
-
 alter table trailers add column if not exists title_number text;
 alter table trailers add column if not exists plate_type text;
 

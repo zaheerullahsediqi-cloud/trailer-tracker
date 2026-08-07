@@ -20,12 +20,7 @@ export default function InvoicesTable({ rows }: { rows: InvoiceRow[] }) {
     { key: "vin", label: "VIN" },
     { key: "renter", label: "Customer" },
     { key: "period", label: "Period" },
-    {
-      key: "amount",
-      label: "Amount",
-      render: (r) => `$${r.amount.toFixed(2)}`,
-      sortValue: (r) => r.amount,
-    },
+    { key: "amount", label: "Amount", render: (r) => `$${r.amount.toFixed(2)}`, sortValue: (r) => r.amount },
     { key: "sent_to", label: "Sent To" },
     {
       key: "sent_at",

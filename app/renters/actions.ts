@@ -50,3 +50,26 @@ export async function deleteRenter(id: string) {
   if (error) throw new Error(error.message);
   revalidatePath("/renters");
 }
+
+export async function uploadRenterLicense(renterId: string, path: string, filename: string) {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("renters")
+    .update({ license_document_url: path, license_document_filename: filename })
+    .eq("id", renterId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/renters/${renterId}`);
+  revalidatePath("/renters");
+}
+
+export async function deleteRenterLicense(renterId: string, path: string) {
+  const supabase = createClient();
+  await supabase.storage.from("documents").remove([path]);
+  const { error } = await supabase
+    .from("renters")
+    .update({ license_document_url: null, license_document_filename: null })
+    .eq("id", renterId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/renters/${renterId}`);
+  revalidatePath("/renters");
+}

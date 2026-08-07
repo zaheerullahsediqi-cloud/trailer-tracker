@@ -24,13 +24,7 @@ export default function RentalTermsEdit({ rental }: { rental: any }) {
         <p className="eyebrow mb-1">Edit rental terms</p>
         <div>
           <label className="label">Start date</label>
-          <input
-            name="start_date"
-            type="date"
-            defaultValue={rental.start_date}
-            required
-            className="input"
-          />
+          <input name="start_date" type="date" defaultValue={rental.start_date} required className="input" />
         </div>
         <div>
           <label className="label">Billing period</label>
@@ -54,24 +48,11 @@ export default function RentalTermsEdit({ rental }: { rental: any }) {
         </div>
         <div>
           <label className="label">Rent rate ($)</label>
-          <input
-            name="rate"
-            type="number"
-            step="0.01"
-            defaultValue={rental.rate}
-            required
-            className="input"
-          />
+          <input name="rate" type="number" step="0.01" defaultValue={rental.rate} required className="input" />
         </div>
         <div>
           <label className="label">Next due date</label>
-          <input
-            name="next_due_date"
-            type="date"
-            defaultValue={rental.next_due_date}
-            required
-            className="input"
-          />
+          <input name="next_due_date" type="date" defaultValue={rental.next_due_date} required className="input" />
         </div>
         <div className="flex gap-2">
           <button className="btn-primary" disabled={saving}>
@@ -94,9 +75,7 @@ export default function RentalTermsEdit({ rental }: { rental: any }) {
         </button>
       </div>
       <p className="text-sm">Start: {rental.start_date}</p>
-      <p className="text-sm">
-        Billing period: {periodLabel(rental.period, rental.period_days)}
-      </p>
+      <p className="text-sm">Billing period: {periodLabel(rental.period, rental.period_days)}</p>
       <p className="text-sm">Rate: ${Number(rental.rate).toFixed(2)}</p>
       <p className="text-sm text-accent">Next due: {rental.next_due_date}</p>
     </div>

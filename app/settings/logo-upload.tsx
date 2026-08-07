@@ -53,7 +53,7 @@ export default function LogoUpload({ currentLogoUrl }: { currentLogoUrl: string 
       <div>
         <p className="eyebrow">Logo</p>
         <p className="text-xs text-muted mt-1">
-          Shown in the sidebar and on every invoice PDF sent to customers.
+          Shown in the sidebar and on every invoice/lease agreement PDF sent to customers.
         </p>
       </div>
 

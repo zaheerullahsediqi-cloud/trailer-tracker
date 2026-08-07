@@ -26,12 +26,7 @@ export default function PaymentHistoryTable({ rows }: { rows: PaymentHistoryRow[
   const columns: Column<PaymentHistoryRow>[] = [
     { key: "vin", label: "VIN", render: (r) => <span className="plate">{r.vin}</span> },
     { key: "renter", label: "Customer" },
-    {
-      key: "amount",
-      label: "Amount",
-      render: (r) => `$${r.amount.toFixed(2)}`,
-      sortValue: (r) => r.amount,
-    },
+    { key: "amount", label: "Amount", render: (r) => `$${r.amount.toFixed(2)}`, sortValue: (r) => r.amount },
     { key: "payment_date", label: "Date" },
     { key: "method", label: "Method", render: (r) => methodLabels[r.method] || r.method },
     { key: "notes", label: "Notes", render: (r) => r.notes || "—" },

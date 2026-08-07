@@ -1,4 +1,3 @@
--- Real notifications log and company settings
 create table if not exists notifications (
   id uuid primary key default gen_random_uuid(),
   rental_id uuid references rentals(id) on delete cascade,

@@ -1,12 +1,3 @@
-// Generates persisted notification rows for rentals that are currently
-// overdue or due soon. Uses an upsert with ON CONFLICT DO NOTHING (via
-// ignoreDuplicates) keyed on (rental_id, due_date, type), so:
-// - a rental that's already overdue doesn't get duplicate rows every time
-//   this runs (cron, or on page load)
-// - once you dismiss or read a notification, it stays dismissed/read —
-//   re-running this never resurrects it
-// - when a due date actually advances (payment marked paid), that's a new
-//   due_date value, so a fresh, unread notification is created for it
 export async function syncNotifications(supabase: any) {
   const { data: rentals } = await supabase
     .from("rentals")

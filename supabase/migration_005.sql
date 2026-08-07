@@ -1,4 +1,3 @@
--- Logo support
 alter table company_settings add column if not exists logo_url text;
 
 insert into storage.buckets (id, name, public) values ('branding', 'branding', true)

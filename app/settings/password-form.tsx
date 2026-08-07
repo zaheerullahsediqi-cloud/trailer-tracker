@@ -46,23 +46,11 @@ export default function PasswordForm() {
       )}
       <div>
         <label className="label">New password</label>
-        <input
-          type="password"
-          className="input"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <input type="password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} required />
       </div>
       <div>
         <label className="label">Confirm new password</label>
-        <input
-          type="password"
-          className="input"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          required
-        />
+        <input type="password" className="input" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
       </div>
       <button className="btn-primary" disabled={saving}>
         {saving ? "Saving..." : "Update password"}

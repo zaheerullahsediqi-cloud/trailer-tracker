@@ -28,8 +28,6 @@ export async function generateInvoicePdf(params: {
     dueDate,
   } = params;
 
-  // Sanitize every dynamic/user-provided field once, up front, so nothing
-  // downstream needs to think about encoding safety.
   const invoiceNumber = safeText(rawInvoiceNumber);
   const companyName = safeText(rawCompanyName);
   const companyEmail = rawCompanyEmail ? safeText(rawCompanyEmail) : undefined;
@@ -51,8 +49,8 @@ export async function generateInvoicePdf(params: {
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
 
-  const navy = rgb(0.059, 0.09, 0.165); // #0F172A
-  const amber = rgb(0.145, 0.388, 0.922); // #2563EB accent
+  const navy = rgb(0.059, 0.09, 0.165);
+  const amber = rgb(0.145, 0.388, 0.922);
   const gray = rgb(0.4, 0.44, 0.53);
 
   let logoImage = null;
@@ -62,7 +60,7 @@ export async function generateInvoicePdf(params: {
         ? await doc.embedPng(logoBytes)
         : await doc.embedJpg(logoBytes);
     } catch {
-      logoImage = null; // if the image can't be embedded, just skip it rather than fail the whole invoice
+      logoImage = null;
     }
   }
 
@@ -80,13 +78,7 @@ export async function generateInvoicePdf(params: {
       color: amber,
     });
   } else {
-    page.drawText(companyName.toUpperCase(), {
-      x: 40,
-      y: 769,
-      size: 14,
-      font: bold,
-      color: amber,
-    });
+    page.drawText(companyName.toUpperCase(), { x: 40, y: 769, size: 14, font: bold, color: amber });
   }
 
   page.drawText("INVOICE", { x: 40, y, size: 22, font: bold, color: navy });
@@ -114,14 +106,16 @@ export async function generateInvoicePdf(params: {
   y -= 20;
   page.drawText("TRAILER", { x: 40, y, size: 9, font: bold, color: amber });
   y -= 16;
-  page.drawText(
-    `${trailer.year ?? ""} ${trailer.make} ${trailer.model}`.trim(),
-    { x: 40, y, size: 11, font, color: navy }
-  );
+  page.drawText(`${trailer.year ?? ""} ${trailer.make} ${trailer.model}`.trim(), {
+    x: 40,
+    y,
+    size: 11,
+    font,
+    color: navy,
+  });
   y -= 14;
   page.drawText(`VIN: ${trailer.vin}`, { x: 40, y, size: 10, font, color: gray });
 
-  // Table
   y -= 40;
   page.drawRectangle({ x: 40, y: y - 6, width: 532, height: 24, color: navy });
   page.drawText("DESCRIPTION", { x: 48, y: y, size: 9, font: bold, color: amber });
@@ -141,10 +135,13 @@ export async function generateInvoicePdf(params: {
   page.drawText(`$${rate.toFixed(2)}`, { x: 480, y, size: 12, font: bold, color: navy });
 
   y -= 60;
-  page.drawText(
-    "Thank you for your business. Please remit payment by the due date above.",
-    { x: 40, y, size: 9, font, color: gray }
-  );
+  page.drawText("Thank you for your business. Please remit payment by the due date above.", {
+    x: 40,
+    y,
+    size: 9,
+    font,
+    color: gray,
+  });
   if (companyEmail) {
     y -= 14;
     page.drawText(`Questions? ${companyEmail}`, { x: 40, y, size: 9, font, color: gray });

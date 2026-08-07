@@ -1,4 +1,3 @@
--- Security deposits, trailer status/unit number, customer notes
 alter table trailers add column if not exists unit_number text;
 alter table trailers add column if not exists status text not null default 'available';
 alter table renters add column if not exists notes text;

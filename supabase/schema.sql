@@ -1,5 +1,3 @@
--- Run this whole file once in Supabase: Project > SQL Editor > New query > paste > Run
-
 create extension if not exists "pgcrypto";
 
 create table trailers (

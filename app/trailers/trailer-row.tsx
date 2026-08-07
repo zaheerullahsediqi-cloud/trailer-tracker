@@ -4,6 +4,7 @@ import { updateTrailer, deleteTrailer } from "./actions";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Truck } from "lucide-react";
+import TrailerDocuments from "./trailer-documents";
 
 const statusBadge: Record<string, string> = {
   available: "badge-success",
@@ -136,6 +137,20 @@ export default function TrailerRow({ trailer }: { trailer: any }) {
       ) : (
         <p className="text-xs text-muted">No active rental.</p>
       )}
+
+      <TrailerDocuments
+        trailerId={trailer.id}
+        registration={{
+          url: trailer.registrationUrl,
+          filename: trailer.registration_filename,
+          path: trailer.registration_url,
+        }}
+        insurance={{
+          url: trailer.insuranceUrl,
+          filename: trailer.insurance_filename,
+          path: trailer.insurance_url,
+        }}
+      />
 
       <div className="flex gap-2 pt-1">
         {isRented && (
