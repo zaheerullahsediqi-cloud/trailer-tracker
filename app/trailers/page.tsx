@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { loadBillingData } from "@/lib/billing-data";
 import { addTrailer } from "./actions";
@@ -45,6 +46,7 @@ export default async function TrailersPage() {
       <div>
         <p className="eyebrow">Fleet</p>
         <h1 className="page-title mt-1">Trailers</h1>
+        <Link href="/history" className="text-accent underline">View previous trailers and rental history</Link>
       </div>
 
       <form action={addTrailer} className="card p-5 grid sm:grid-cols-2 gap-4">
@@ -95,7 +97,7 @@ export default async function TrailersPage() {
       </form>
 
       <div className="grid sm:grid-cols-2 gap-4">
-        {enriched.map((t: any) => (
+        {enriched.filter((t: any) => t.status !== "sold").map((t: any) => (
           <TrailerRow key={t.id} trailer={t} />
         ))}
         {enriched.length === 0 && (

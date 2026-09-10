@@ -19,6 +19,7 @@ export default async function RentalsPage() {
       <div>
         <p className="eyebrow">Agreements</p>
         <h1 className="page-title mt-1">Rentals</h1>
+        <Link href="/history?view=rentals" className="text-accent underline">View previous rentals</Link>
       </div>
 
       <form action={createRental} className="card p-5 grid sm:grid-cols-2 gap-4">
@@ -85,7 +86,7 @@ export default async function RentalsPage() {
       </form>
 
       <div className="space-y-2">
-        {(rentals ?? []).map((r: any) => (
+        {(rentals ?? []).filter((r: any) => r.status === "active").map((r: any) => (
           <Link
             key={r.id}
             href={`/rentals/${r.id}`}

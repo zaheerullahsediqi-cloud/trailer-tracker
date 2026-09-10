@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import {
+  History,
   LayoutDashboard,
   Truck,
   Users,
@@ -18,6 +19,7 @@ const navItems = [
   { href: "/trailers", label: "Trailers", icon: Truck },
   { href: "/renters", label: "Customers", icon: Users },
   { href: "/rentals", label: "Rentals", icon: FileText },
+  { href: "/history", label: "History", icon: History },
   { href: "/payments", label: "Payments", icon: CreditCard },
   { href: "/invoices", label: "Invoices", icon: Receipt },
   { href: "/reports", label: "Reports", icon: BarChart3 },
