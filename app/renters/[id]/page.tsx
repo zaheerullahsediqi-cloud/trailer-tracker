@@ -1,3 +1,4 @@
+import BillingReviewNotice from "@/app/billing-review-notice";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { rentalBalance, todayISO } from "@/lib/billing";
@@ -73,6 +74,7 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
 
   return (
     <div className="space-y-8">
+      <BillingReviewNotice count={list.filter((r: any) => r.status !== "active" && !r.end_date).length} />
       <div>
         <p className="eyebrow">Customer</p>
         <h1 className="page-title mt-1">{renter.name}</h1>
@@ -140,6 +142,7 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
                 <p className="plate">{r.trailers?.vin}</p>
                 <p className="text-xs text-muted mt-0.5">
                   {r.start_date} — ${Number(r.rate).toFixed(2)}/{r.period}
+                  {r.status !== "active" && ` · End: ${r.end_date || "not recorded"}`}
                 </p>
               </div>
               <span className={r.status === "active" ? "badge-success" : "badge-neutral"}>{r.status}</span>

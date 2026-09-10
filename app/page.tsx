@@ -1,3 +1,4 @@
+import BillingReviewNotice from "@/app/billing-review-notice";
 import { createClient } from "@/lib/supabase/server";
 import { loadBillingData } from "@/lib/billing-data";
 import { daysUntil, monthlyEquivalent } from "@/lib/billing";
@@ -28,7 +29,7 @@ export default async function Dashboard() {
   const dueSoon = actionable.filter(r => balances.get(r.id)!.overdue === 0 && balances.get(r.id)!.upcoming > 0);
   const upcoming = list.filter(r => !balances.get(r.id)!.nextUnpaid && balances.get(r.id)!.nextScheduled).map(r => ({...r, next_due_date: balances.get(r.id)!.nextScheduled}));
   const monthPayments = payments.filter(p => p.payment_date >= today.slice(0,7) + '-01');
-  const totalTrailers = trailers?.length ?? 0;
+  const totalTrailers = trailers.filter(t => t.status !== "sold").length;
   const activeRentalCount = list.length;
   const rentedTrailerIds = new Set(list.map((r: any) => r.trailer_id));
   const availableTrailers = trailers.filter(t => t.status === "available" && !rentedTrailerIds.has(t.id)).length;
@@ -76,7 +77,7 @@ export default async function Dashboard() {
   });
 
   const stats = [
-    { label: "Total Trailers", value: totalTrailers, icon: Truck, tint: "bg-accent/10 text-accent" },
+    { label: "Current Fleet", value: totalTrailers, icon: Truck, tint: "bg-accent/10 text-accent" },
     { label: "Active Rentals", value: activeRentalCount, icon: FileCheck, tint: "bg-success/10 text-success" },
     {
       label: "Monthly Rent (estimated)",
@@ -103,6 +104,7 @@ export default async function Dashboard() {
 
   return (
     <div className="space-y-8">
+      <BillingReviewNotice count={[...balances.values()].filter(b => b.needsReview).length} />
       <div>
         <p className="eyebrow">Fleet overview</p>
         <h1 className="page-title mt-1">Dashboard</h1>

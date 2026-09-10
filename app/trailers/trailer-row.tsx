@@ -10,11 +10,13 @@ const statusBadge: Record<string, string> = {
   available: "badge-success",
   maintenance: "badge-warning",
   out_of_service: "badge-danger",
+  sold: "badge-neutral",
 };
 const statusLabel: Record<string, string> = {
   available: "Available",
   maintenance: "Maintenance",
   out_of_service: "Out of Service",
+  sold: "Sold",
 };
 const paymentBadge: Record<string, string> = {
   "Paid up": "badge-success",
@@ -66,6 +68,7 @@ export default function TrailerRow({ trailer }: { trailer: any }) {
             <option value="available">Available</option>
             <option value="maintenance">Maintenance</option>
             <option value="out_of_service">Out of service</option>
+            <option value="sold">Sold (retain records)</option>
           </select>
         </div>
         <div>

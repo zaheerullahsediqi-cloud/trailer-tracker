@@ -1,3 +1,4 @@
+import BillingReviewNotice from "@/app/billing-review-notice";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import ContractUpload from "./contract-upload";
@@ -87,6 +88,8 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
 
   return (
     <div className="space-y-8">
+      <BillingReviewNotice count={rental.status !== "active" && !rental.end_date ? 1 : 0} />
+      {rental.completion_note && <p className="text-sm text-muted">{rental.completion_note}</p>}
       <div className="flex items-start justify-between">
         <div>
           <span className={rental.status === "active" ? "badge-success" : "badge-neutral"}>

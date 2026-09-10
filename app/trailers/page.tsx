@@ -74,6 +74,7 @@ export default async function TrailersPage() {
             <option value="available">Available</option>
             <option value="maintenance">Maintenance</option>
             <option value="out_of_service">Out of service</option>
+            <option value="sold">Sold (retain records)</option>
           </select>
         </div>
         <div>

@@ -40,3 +40,11 @@ test('legacy monthly date drift does not create duplicate rent charges',()=>{
  const invoices=[{rental_id:'r',period_start:'2024-03-29',amount:100,created_at:'2024-03-29'}];
  assert.equal(rentalBalance({...r,start_date:'2024-01-31'},[],invoices,'2024-03-31').outstanding,200);
 });
+
+test('historical rentals without an end date never fabricate recurring charges',()=>{
+ const old={...r,status:'completed',end_date:null};
+ const payments=[{rental_id:'r',amount:40,payment_date:'2026-02-01'}];
+ assert.equal(rentalBalance(old,[],[],'2026-06-01').outstanding,0);
+ const b=rentalBalance(old,payments,[{rental_id:'r',period_start:'2026-02-01',amount:100,created_at:'2026-02-01'}],'2026-06-01');
+ assert.equal(b.outstanding,60); assert.equal(b.needsReview,true);
+});

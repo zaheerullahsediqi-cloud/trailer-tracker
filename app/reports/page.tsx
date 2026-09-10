@@ -1,3 +1,4 @@
+import BillingReviewNotice from "@/app/billing-review-notice";
 import { createClient } from "@/lib/supabase/server";
 import { loadBillingData } from "@/lib/billing-data";
 import RevenueChart from "../revenue-chart";
@@ -7,7 +8,7 @@ export default async function ReportsPage() {
   const supabase = createClient();
   const { trailers, rentals, payments, balances } = await loadBillingData(supabase);
   const activeRentals = rentals.filter(r => r.status === 'active');
-  const totalTrailers = trailers?.length ?? 0;
+  const totalTrailers = trailers.filter(t => t.status !== "sold").length;
   const rentedTrailerIds = new Set((activeRentals ?? []).map((r: any) => r.trailer_id));
   const availableCount = trailers.filter(t => t.status === "available" && !rentedTrailerIds.has(t.id)).length;
 
@@ -50,6 +51,7 @@ export default async function ReportsPage() {
 
   return (
     <div className="space-y-6">
+      <BillingReviewNotice count={[...balances.values()].filter(b => b.needsReview).length} />
       <div>
         <p className="eyebrow">Analytics</p>
         <h1 className="page-title mt-1">Reports</h1>

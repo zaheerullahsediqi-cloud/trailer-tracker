@@ -23,10 +23,13 @@ test('database migration enforces rental, history, invoice and role safeguards',
  await assert.rejects(db.exec(`delete from renters where id='${c}'`),/foreign key/);
  await assert.rejects(db.exec(`delete from rentals where id='${r}'`),/history is preserved/);
  await assert.rejects(db.exec(`insert into payments(rental_id,amount) values ('${r}',-1)`),/check constraint/);
+ await assert.rejects(db.exec(`update trailers set status='sold' where id='${t}'`),/Complete the active rental/);
  const sql=`select (reserve_invoice('${r}','{"renters":{"email":"customer@example.com"}}')).id`;
  const a=await db.query(sql),b=await db.query(sql); assert.deepEqual(a.rows,b.rows);
  await assert.rejects(db.exec(`update rentals set rate=200 where id='${r}'`),/Historical billing terms/);
  await db.exec(`update rentals set status='completed' where id='${r}'; update trailers set status='maintenance' where id='${t}'`);
+ await assert.rejects(db.exec(`insert into rentals(trailer_id,renter_id,start_date,next_due_date) values ('${t}','${c}','2026-01-01','2026-02-01')`),/must be available/);
+ await db.exec(`update trailers set status='sold' where id='${t}'`);
  await assert.rejects(db.exec(`insert into rentals(trailer_id,renter_id,start_date,next_due_date) values ('${t}','${c}','2026-01-01','2026-02-01')`),/must be available/);
  await db.exec(`grant usage on schema auth to authenticated; grant select on storage.objects to authenticated;
  insert into auth.users values ('00000000-0000-0000-0000-000000000002','{}');

@@ -8,6 +8,7 @@ do $$ begin
 end $$;
 create unique index if not exists one_active_rental_per_trailer on rentals(trailer_id) where status='active';
 alter table rentals add column if not exists end_date date;
+alter table rentals add column if not exists completion_note text;
 alter table rentals drop constraint if exists rentals_trailer_id_fkey;
 alter table rentals add constraint rentals_trailer_id_fkey foreign key(trailer_id) references trailers(id) on delete restrict;
 alter table rentals drop constraint if exists rentals_renter_id_fkey;
@@ -35,7 +36,7 @@ end $$;
 create trigger rental_guard before insert or update or delete on rentals for each row execute function guard_rental();
 create or replace function guard_trailer_status() returns trigger language plpgsql set search_path=public as $$
 begin
- if new.status not in ('available','maintenance','out_of_service') then raise exception 'Invalid trailer status'; end if;
+ if new.status not in ('available','maintenance','out_of_service','sold') then raise exception 'Invalid trailer status'; end if;
  if new.status<>'available' and exists(select 1 from rentals where trailer_id=new.id and status='active') then raise exception 'Complete the active rental before taking this trailer out of service'; end if;
  return new;
 end $$;

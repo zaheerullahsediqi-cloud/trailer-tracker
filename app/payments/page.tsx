@@ -1,3 +1,4 @@
+import BillingReviewNotice from "@/app/billing-review-notice";
 import { createClient } from "@/lib/supabase/server";
 import { loadBillingData } from "@/lib/billing-data";
 import { daysUntil } from "@/lib/billing";
@@ -40,6 +41,7 @@ export default async function PaymentsPage() {
 
   return (
     <div className="space-y-6">
+      <BillingReviewNotice count={[...balances.values()].filter(b => b.needsReview).length} />
       <div>
         <p className="eyebrow">Billing</p>
         <h1 className="page-title mt-1">Payments</h1>

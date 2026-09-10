@@ -29,11 +29,12 @@ function invoiceScheduleDate(r: any, date: string): string {
 export function rentalBalance(r: any, payments: any[] = [], invoices: any[] = [], today = todayISO()) {
   const horizon = addDays(today, 5);
   const charges = new Map<string, number>();
-  const end = r.status === 'active' ? horizon : (r.end_date || r.next_due_date);
+  const needsReview = r.status !== 'active' && !r.end_date;
+  const end = r.status === 'active' ? horizon : r.end_date;
   if (!Number.isFinite(Number(r.rate)) || Number(r.rate) < 0 || !Number.isInteger(Number(r.period_days)) || Number(r.period_days) <= 0) throw new Error('Invalid rental billing terms');
-  for (let i = 1; ; i++) {
+  for (let i = 1; !needsReview; i++) {
     const due = dueAt(r, i);
-    if (due > horizon || (r.status !== 'active' && (r.end_date ? due > end : due >= end))) break;
+    if (due > horizon || (r.status !== 'active' && due > end)) break;
     if (i > 100000) throw new Error('Rental schedule is too long');
     charges.set(due, Math.round(Number(r.rate) * 100));
   }
@@ -66,5 +67,5 @@ export function rentalBalance(r: any, payments: any[] = [], invoices: any[] = []
       futureCredit -= amount;
     }
   }
-  return { nextScheduled, outstanding: outstanding / 100, overdue: overdue / 100, upcoming: upcoming / 100, nextUnpaid, credit: credit / 100 };
+  return { needsReview, nextScheduled, outstanding: outstanding / 100, overdue: overdue / 100, upcoming: upcoming / 100, nextUnpaid, credit: credit / 100 };
 }
