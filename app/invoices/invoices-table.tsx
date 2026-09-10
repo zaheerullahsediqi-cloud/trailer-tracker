@@ -11,6 +11,7 @@ type InvoiceRow = {
   amount: number;
   sent_to: string;
   sent_at: string | null;
+  delivery_status: string;
   rental_id: string | null;
 };
 
@@ -21,6 +22,7 @@ export default function InvoicesTable({ rows }: { rows: InvoiceRow[] }) {
     { key: "renter", label: "Customer" },
     { key: "period", label: "Period" },
     { key: "amount", label: "Amount", render: (r) => `$${r.amount.toFixed(2)}`, sortValue: (r) => r.amount },
+    { key: "delivery_status", label: "Delivery", render: r => ({sent:"Sent",pending:"Pending",sending:"Sending / review if interrupted",failed:"Failed",review_required:"Needs delivery review"}[r.delivery_status] || r.delivery_status) },
     { key: "sent_to", label: "Sent To" },
     {
       key: "sent_at",

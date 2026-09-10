@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
+import { loadBillingData } from "@/lib/billing-data";
+import { daysUntil, monthlyEquivalent } from "@/lib/billing";
 import Link from "next/link";
 import RevenueChart from "./revenue-chart";
 import {
@@ -15,50 +17,29 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-function daysUntil(dateStr: string) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const due = new Date(dateStr);
-  return Math.round((due.getTime() - today.getTime()) / 86400000);
-}
 
 export default async function Dashboard() {
   const supabase = createClient();
 
-  const [{ data: rentals }, { data: trailers }, { data: invoices }, { data: monthPayments }] = await Promise.all([
-    supabase
-      .from("rentals")
-      .select("*, trailers(vin, make, model), renters(name, email)")
-      .eq("status", "active")
-      .order("next_due_date", { ascending: true }),
-    supabase.from("trailers").select("id"),
-    supabase.from("invoices").select("amount, sent_at").order("sent_at", { ascending: true }),
-    supabase
-      .from("payments")
-      .select("amount, payment_date")
-      .gte("payment_date", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10)),
-  ]);
-
-  const list = rentals ?? [];
-  const overdue = list.filter((r: any) => daysUntil(r.next_due_date) < 0);
-  const dueSoon = list.filter((r: any) => {
-    const d = daysUntil(r.next_due_date);
-    return d >= 0 && d <= 5;
-  });
-  const upcoming = list.filter((r: any) => daysUntil(r.next_due_date) > 5);
-
+  const { rentals, trailers, payments, balances, today } = await loadBillingData(supabase);
+  const list = rentals.filter(r => r.status === 'active');
+  const actionable = rentals.map(r => ({...r, next_due_date: balances.get(r.id)!.nextUnpaid})).filter(r => r.next_due_date);
+  const overdue = actionable.filter(r => balances.get(r.id)!.overdue > 0);
+  const dueSoon = actionable.filter(r => balances.get(r.id)!.overdue === 0 && balances.get(r.id)!.upcoming > 0);
+  const upcoming = list.filter(r => !balances.get(r.id)!.nextUnpaid && balances.get(r.id)!.nextScheduled).map(r => ({...r, next_due_date: balances.get(r.id)!.nextScheduled}));
+  const monthPayments = payments.filter(p => p.payment_date >= today.slice(0,7) + '-01');
   const totalTrailers = trailers?.length ?? 0;
   const activeRentalCount = list.length;
   const rentedTrailerIds = new Set(list.map((r: any) => r.trailer_id));
-  const availableTrailers = Math.max(totalTrailers - rentedTrailerIds.size, 0);
+  const availableTrailers = trailers.filter(t => t.status === "available" && !rentedTrailerIds.has(t.id)).length;
   const occupancyRate = totalTrailers > 0 ? Math.round((rentedTrailerIds.size / totalTrailers) * 100) : 0;
-  const monthlyRevenue = list.reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
-  const outstandingBalance = overdue.reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
-  const upcomingDueAmount = dueSoon.reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
+  const monthlyRevenue = list.reduce((sum: number, r: any) => sum + monthlyEquivalent(r), 0);
+  const outstandingBalance = [...balances.values()].reduce((sum, b) => sum + b.outstanding, 0);
+  const upcomingDueAmount = [...balances.values()].reduce((sum, b) => sum + b.upcoming, 0);
 
   const collectedThisMonth = (monthPayments ?? []).reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
 
-  const depositsHeld = list.reduce((sum: number, r: any) => {
+  const depositsHeld = rentals.reduce((sum: number, r: any) => {
     if (r.security_deposit_status === "held") return sum + Number(r.security_deposit_amount || 0);
     if (r.security_deposit_status === "partially_returned") {
       return sum + Math.max(Number(r.security_deposit_amount || 0) - Number(r.security_deposit_returned_amount || 0), 0);
@@ -66,7 +47,7 @@ export default async function Dashboard() {
     return sum;
   }, 0);
 
-  const downPaymentsOutstanding = list.reduce((sum: number, r: any) => {
+  const downPaymentsOutstanding = rentals.reduce((sum: number, r: any) => {
     if (r.down_payment_status === "not_collected") return sum + Number(r.down_payment_amount || 0);
     if (r.down_payment_status === "partially_collected") {
       return sum + Math.max(Number(r.down_payment_amount || 0) - Number(r.down_payment_collected_amount || 0), 0);
@@ -86,9 +67,9 @@ export default async function Dashboard() {
       revenue: 0,
     });
   }
-  (invoices ?? []).forEach((inv: any) => {
-    if (!inv.sent_at) return;
-    const d = new Date(inv.sent_at);
+  payments.forEach((inv: any) => {
+    if (!inv.payment_date) return;
+    const d = new Date(inv.payment_date);
     const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
     const bucket = months.find((m) => m.key === key);
     if (bucket) bucket.revenue += parseFloat(inv.amount) || 0;
@@ -98,7 +79,7 @@ export default async function Dashboard() {
     { label: "Total Trailers", value: totalTrailers, icon: Truck, tint: "bg-accent/10 text-accent" },
     { label: "Active Rentals", value: activeRentalCount, icon: FileCheck, tint: "bg-success/10 text-success" },
     {
-      label: "Monthly Revenue",
+      label: "Monthly Rent (estimated)",
       value: `$${monthlyRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
       icon: DollarSign,
       tint: "bg-accent/10 text-accent",
@@ -187,7 +168,7 @@ export default async function Dashboard() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="section-title">Revenue Trend</p>
-            <p className="text-xs text-muted mt-0.5">Invoiced amount by month, last 6 months</p>
+            <p className="text-xs text-muted mt-0.5">Payments received by month, last 6 months</p>
           </div>
         </div>
         <RevenueChart data={months} />

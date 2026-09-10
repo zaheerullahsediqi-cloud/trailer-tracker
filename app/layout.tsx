@@ -5,7 +5,7 @@ import MobileNav from "./mobile-nav";
 import TopBar from "./top-bar";
 import ThemeScript from "./theme-script";
 import { createClient } from "@/lib/supabase/server";
-import { syncNotifications } from "@/lib/notifications";
+import { syncNotifications, currentNotifications } from "@/lib/notifications";
 import { getCompanySettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
@@ -25,13 +25,13 @@ export default async function RootLayout({
 
   let alertCount = 0;
   if (user) {
-    await syncNotifications(supabase);
-    const { count } = await supabase
+    const current = await syncNotifications(supabase);
+    const { data } = await supabase
       .from("notifications")
-      .select("*", { count: "exact", head: true })
+      .select("*")
       .is("read_at", null)
       .is("dismissed_at", null);
-    alertCount = count ?? 0;
+    alertCount = currentNotifications(data ?? [], current).length;
   }
 
   const { companyName, logoUrl } = await getCompanySettings(supabase);

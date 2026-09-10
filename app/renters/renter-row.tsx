@@ -79,9 +79,9 @@ export default function RenterRow({ renter }: { renter: any }) {
         </button>
         <button
           className="btn-danger text-xs"
-          onClick={() => {
+          onClick={async () => {
             if (confirm("Delete this renter? This cannot be undone.")) {
-              deleteRenter(renter.id);
+              try { await deleteRenter(renter.id); } catch (e: any) { alert(e.message); }
             }
           }}
         >

@@ -1,6 +1,7 @@
 "use client";
 import { updateRentalStatus } from "../actions";
-import { deleteRental } from "./actions";
+
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function RentalControls({
@@ -10,6 +11,7 @@ export default function RentalControls({
   rentalId: string;
   status: string;
 }) {
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   return (
@@ -18,34 +20,13 @@ export default function RentalControls({
         <button
           className="btn-secondary text-xs"
           onClick={async () => {
-            await updateRentalStatus(rentalId, "completed");
-            router.refresh();
+            try { await updateRentalStatus(rentalId, "completed"); router.refresh(); } catch(e: any) { setError(e.message); }
           }}
         >
           Mark completed
         </button>
-      ) : (
-        <button
-          className="btn-secondary text-xs"
-          onClick={async () => {
-            await updateRentalStatus(rentalId, "active");
-            router.refresh();
-          }}
-        >
-          Reactivate
-        </button>
-      )}
-      <button
-        className="btn-danger text-xs"
-        onClick={async () => {
-          if (confirm("Delete this rental permanently?")) {
-            await deleteRental(rentalId);
-            router.push("/rentals");
-          }
-        }}
-      >
-        Delete
-      </button>
+      ) : null}
+      {error && <p className="text-danger text-sm">{error}</p>}
     </div>
   );
 }

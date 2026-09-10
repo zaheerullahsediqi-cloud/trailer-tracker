@@ -1,6 +1,7 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { nextInvoiceDate } from "@/lib/billing";
 import { advanceByPeriod } from "@/lib/date";
 
 function periodToDays(period: string, customDays?: number) {
@@ -22,6 +23,7 @@ export async function createRental(formData: FormData) {
   const security_deposit_amount = Number(formData.get("security_deposit_amount") || 0);
   const down_payment_amount = Number(formData.get("down_payment_amount") || 0);
 
+  if (!Number.isFinite(rate) || rate < 0 || !["weekly","monthly","semiannual","annual","custom"].includes(period) || (period === "custom" && (!Number.isInteger(customDays) || customDays <= 0))) throw new Error("Enter valid billing terms.");
   const period_days = periodToDays(period, customDays);
   const next_due_date = advanceByPeriod(start_date, period, period_days);
 
@@ -40,7 +42,7 @@ export async function createRental(formData: FormData) {
     down_payment_status: "not_collected",
   });
   if (error) throw new Error(error.message);
-  revalidatePath("/rentals");
+  revalidatePath("/", "layout");
 }
 
 export async function updateSecurityDeposit(id: string, formData: FormData) {
@@ -100,7 +102,7 @@ export async function updateRentalTerms(id: string, formData: FormData) {
     .eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath(`/rentals/${id}`);
-  revalidatePath("/rentals");
+  revalidatePath("/", "layout");
   revalidatePath("/");
 }
 
@@ -108,7 +110,7 @@ export async function updateRentalStatus(id: string, status: string) {
   const supabase = createClient();
   const { error } = await supabase.from("rentals").update({ status }).eq("id", id);
   if (error) throw new Error(error.message);
-  revalidatePath("/rentals");
+  revalidatePath("/", "layout");
   revalidatePath(`/rentals/${id}`);
 }
 
@@ -116,11 +118,11 @@ export async function advanceDueDate(id: string) {
   const supabase = createClient();
   const { data: rental } = await supabase.from("rentals").select("*").eq("id", id).single();
   if (!rental) throw new Error("Rental not found");
-  const next_due_date = advanceByPeriod(rental.next_due_date, rental.period, rental.period_days);
-  const { error } = await supabase.from("rentals").update({ next_due_date }).eq("id", id);
+  const next_due_date = nextInvoiceDate(rental);
+  const { error } = await supabase.from("rentals").update({ next_due_date }).eq("id", id).eq("next_due_date", rental.next_due_date).select("id").single();
   if (error) throw new Error(error.message);
   revalidatePath(`/rentals/${id}`);
-  revalidatePath("/rentals");
+  revalidatePath("/", "layout");
   revalidatePath("/");
 }
 

@@ -1,13 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
+import { loadBillingData } from "@/lib/billing-data";
 import { addTrailer } from "./actions";
 import TrailerRow from "./trailer-row";
 
-function daysUntil(dateStr: string) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const due = new Date(dateStr);
-  return Math.round((due.getTime() - today.getTime()) / 86400000);
-}
 
 export default async function TrailersPage() {
   const supabase = createClient();
@@ -19,6 +14,7 @@ export default async function TrailersPage() {
       .eq("status", "active"),
   ]);
 
+  const { balances } = await loadBillingData(supabase);
   const rentalByTrailer = new Map<string, any>();
   (activeRentals ?? []).forEach((r: any) => rentalByTrailer.set(r.trailer_id, r));
 
@@ -27,8 +23,8 @@ export default async function TrailersPage() {
       const rental = rentalByTrailer.get(t.id);
       let paymentStatus: "Paid up" | "Due Soon" | "Overdue" | null = null;
       if (rental) {
-        const d = daysUntil(rental.next_due_date);
-        paymentStatus = d < 0 ? "Overdue" : d <= 5 ? "Due Soon" : "Paid up";
+        const balance = balances.get(rental.id)!;
+        paymentStatus = balance.overdue > 0 ? "Overdue" : balance.upcoming > 0 ? "Due Soon" : "Paid up";
       }
       let registrationUrl: string | null = null;
       let insuranceUrl: string | null = null;

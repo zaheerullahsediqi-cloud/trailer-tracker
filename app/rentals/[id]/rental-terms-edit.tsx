@@ -6,6 +6,7 @@ import { periodLabel } from "@/lib/date";
 
 export default function RentalTermsEdit({ rental }: { rental: any }) {
   const [editing, setEditing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
@@ -14,14 +15,15 @@ export default function RentalTermsEdit({ rental }: { rental: any }) {
       <form
         action={async (formData) => {
           setSaving(true);
-          await updateRentalTerms(rental.id, formData);
-          setSaving(false);
-          setEditing(false);
-          router.refresh();
+          setError(null);
+          try { await updateRentalTerms(rental.id, formData); setEditing(false); router.refresh(); }
+          catch(e: any) { setError(e.message); }
+          finally { setSaving(false); }
         }}
         className="card p-5 space-y-3"
       >
         <p className="eyebrow mb-1">Edit rental terms</p>
+        {error && <p className="text-sm text-danger">{error}</p>}
         <div>
           <label className="label">Start date</label>
           <input name="start_date" type="date" defaultValue={rental.start_date} required className="input" />
@@ -51,7 +53,7 @@ export default function RentalTermsEdit({ rental }: { rental: any }) {
           <input name="rate" type="number" step="0.01" defaultValue={rental.rate} required className="input" />
         </div>
         <div>
-          <label className="label">Next due date</label>
+          <label className="label">Next invoice date</label>
           <input name="next_due_date" type="date" defaultValue={rental.next_due_date} required className="input" />
         </div>
         <div className="flex gap-2">
@@ -77,7 +79,7 @@ export default function RentalTermsEdit({ rental }: { rental: any }) {
       <p className="text-sm">Start: {rental.start_date}</p>
       <p className="text-sm">Billing period: {periodLabel(rental.period, rental.period_days)}</p>
       <p className="text-sm">Rate: ${Number(rental.rate).toFixed(2)}</p>
-      <p className="text-sm text-accent">Next due: {rental.next_due_date}</p>
+      <p className="text-sm text-accent">Next invoice: {rental.next_due_date}</p>
     </div>
   );
 }

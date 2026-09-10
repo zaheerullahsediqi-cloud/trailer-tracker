@@ -1,11 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import { syncNotifications } from "@/lib/notifications";
+import { syncNotifications, currentNotifications } from "@/lib/notifications";
 import NotificationRow from "./notification-row";
 import MarkAllButton from "./mark-all-button";
 
 export default async function NotificationsPage() {
   const supabase = createClient();
-  await syncNotifications(supabase);
+  const current = await syncNotifications(supabase);
 
   const { data: notifications } = await supabase
     .from("notifications")
@@ -13,7 +13,7 @@ export default async function NotificationsPage() {
     .is("dismissed_at", null)
     .order("created_at", { ascending: false });
 
-  const list = notifications ?? [];
+  const list = currentNotifications(notifications ?? [], current);
   const unreadCount = list.filter((n: any) => !n.read_at).length;
 
   return (

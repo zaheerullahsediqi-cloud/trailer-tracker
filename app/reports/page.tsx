@@ -1,41 +1,24 @@
 import { createClient } from "@/lib/supabase/server";
+import { loadBillingData } from "@/lib/billing-data";
 import RevenueChart from "../revenue-chart";
 import { OccupancyPie, CollectionsPie, UtilizationBar, PaymentHistoryArea } from "./reports-charts";
 
 export default async function ReportsPage() {
   const supabase = createClient();
-  const [{ data: trailers }, { data: activeRentals }, { data: invoices }, { data: allRentals }] =
-    await Promise.all([
-      supabase.from("trailers").select("id, vin"),
-      supabase.from("rentals").select("*, trailers(vin)").eq("status", "active"),
-      supabase.from("invoices").select("amount, sent_at, rentals(trailers(vin))").order("sent_at"),
-      supabase.from("rentals").select("rate, trailers(vin)"),
-    ]);
-
+  const { trailers, rentals, payments, balances } = await loadBillingData(supabase);
+  const activeRentals = rentals.filter(r => r.status === 'active');
   const totalTrailers = trailers?.length ?? 0;
   const rentedTrailerIds = new Set((activeRentals ?? []).map((r: any) => r.trailer_id));
-  const availableCount = Math.max(totalTrailers - rentedTrailerIds.size, 0);
+  const availableCount = trailers.filter(t => t.status === "available" && !rentedTrailerIds.has(t.id)).length;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const overdueTotal = (activeRentals ?? [])
-    .filter((r: any) => new Date(r.next_due_date) < today)
-    .reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
-  const collectedTotal = (invoices ?? []).reduce((sum: number, i: any) => sum + (parseFloat(i.amount) || 0), 0);
-
+  const overdueTotal = [...balances.values()].reduce((n,b) => n + b.outstanding, 0);
+  const collectedTotal = payments.reduce((n,p) => n + Number(p.amount), 0);
   const revenueByVin = new Map<string, number>();
-  (invoices ?? []).forEach((inv: any) => {
+  payments.forEach((inv: any) => {
     const vin = inv.rentals?.trailers?.vin;
     if (!vin) return;
     revenueByVin.set(vin, (revenueByVin.get(vin) || 0) + (parseFloat(inv.amount) || 0));
   });
-  if (revenueByVin.size === 0) {
-    (allRentals ?? []).forEach((r: any) => {
-      const vin = r.trailers?.vin;
-      if (!vin) return;
-      revenueByVin.set(vin, (revenueByVin.get(vin) || 0) + Number(r.rate || 0));
-    });
-  }
   const utilizationData = Array.from(revenueByVin.entries())
     .map(([vin, revenue]) => ({ vin, revenue }))
     .sort((a, b) => b.revenue - a.revenue)
@@ -54,9 +37,9 @@ export default async function ReportsPage() {
       count: 0,
     });
   }
-  (invoices ?? []).forEach((inv: any) => {
-    if (!inv.sent_at) return;
-    const d = new Date(inv.sent_at);
+  payments.forEach((inv: any) => {
+    if (!inv.payment_date) return;
+    const d = new Date(inv.payment_date);
     const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
     const bucket = months.find((m) => m.key === key);
     if (bucket) {
@@ -73,14 +56,14 @@ export default async function ReportsPage() {
       </div>
 
       <div className="card p-5">
-        <p className="section-title mb-4">Revenue Trend</p>
+        <p className="section-title mb-4">Payments Received</p>
         <RevenueChart data={months} />
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
         <div className="card p-5">
           <p className="section-title mb-2">Occupancy</p>
-          <OccupancyPie rented={rentedTrailerIds.size} available={availableCount} />
+          <OccupancyPie rented={rentedTrailerIds.size} available={availableCount} unavailable={Math.max(totalTrailers - rentedTrailerIds.size - availableCount, 0)} />
         </div>
         <div className="card p-5">
           <p className="section-title mb-2">Collections</p>
@@ -90,7 +73,7 @@ export default async function ReportsPage() {
 
       <div className="grid md:grid-cols-2 gap-4">
         <div className="card p-5">
-          <p className="section-title mb-2">Trailer Utilization (top 8 by revenue)</p>
+          <p className="section-title mb-2">Payments by trailer (top 8)</p>
           {utilizationData.length > 0 ? (
             <UtilizationBar data={utilizationData} />
           ) : (
@@ -98,7 +81,7 @@ export default async function ReportsPage() {
           )}
         </div>
         <div className="card p-5">
-          <p className="section-title mb-2">Payment History (invoices sent per month)</p>
+          <p className="section-title mb-2">Payment History (payments received per month)</p>
           <PaymentHistoryArea data={months} />
         </div>
       </div>

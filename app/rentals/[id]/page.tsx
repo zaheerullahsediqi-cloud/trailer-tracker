@@ -228,7 +228,7 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
           {(invoices ?? []).map((inv: any) => (
             <p key={inv.id} className="text-sm text-muted">
               {inv.period_start} → {inv.period_end} — <span className="font-medium text-primary">${Number(inv.amount).toFixed(2)}</span> — sent to{" "}
-              {inv.sent_to} on {new Date(inv.sent_at).toLocaleDateString()}
+              {inv.sent_to} — {inv.sent_at ? new Date(inv.sent_at).toLocaleDateString() : (inv.delivery_status || "Pending")}
             </p>
           ))}
           {(!invoices || invoices.length === 0) && (

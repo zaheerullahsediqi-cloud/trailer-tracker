@@ -9,10 +9,11 @@ export default async function RentalsPage() {
       .from("rentals")
       .select("*, trailers(vin, make, model), renters(name)")
       .order("created_at", { ascending: false }),
-    supabase.from("trailers").select("id, vin, make, model").order("vin"),
+    supabase.from("trailers").select("id, vin, make, model").eq("status", "available").order("vin"),
     supabase.from("renters").select("id, name").order("name"),
   ]);
 
+  const occupied = new Set((rentals ?? []).filter((r: any) => r.status === "active").map((r: any) => r.trailer_id));
   return (
     <div className="space-y-8">
       <div>
@@ -25,7 +26,7 @@ export default async function RentalsPage() {
           <label className="label">Trailer</label>
           <select name="trailer_id" required className="input">
             <option value="">Select trailer</option>
-            {(trailers ?? []).map((t: any) => (
+            {(trailers ?? []).filter((t: any) => !occupied.has(t.id)).map((t: any) => (
               <option key={t.id} value={t.id}>
                 {t.vin} — {t.make} {t.model}
               </option>
@@ -100,7 +101,7 @@ export default async function RentalsPage() {
               <span className={r.status === "active" ? "badge-success" : "badge-neutral"}>
                 {r.status}
               </span>
-              <p className="text-xs text-muted">Next due {r.next_due_date}</p>
+              <p className="text-xs text-muted">Next invoice {r.next_due_date}</p>
             </div>
           </Link>
         ))}

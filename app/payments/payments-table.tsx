@@ -43,11 +43,11 @@ export default function PaymentsTable({ rows }: { rows: PaymentRow[] }) {
   ];
 
   async function markPaidBulk(ids: string[]) {
-    if (!confirm(`Mark ${ids.length} rental(s) as paid and advance their due dates?`)) return;
-    for (const id of ids) {
-      await advanceDueDate(id);
-    }
-    router.refresh();
+    if (!confirm(`Advance ${ids.length} invoice due date(s)? This does not record payments or reduce balances.`)) return;
+    try {
+      for (const id of ids) await advanceDueDate(id);
+    } catch (e: any) { alert("Stopped: " + e.message + ". Previously completed advances are retained."); }
+    finally { router.refresh(); }
   }
 
   return (
@@ -55,7 +55,7 @@ export default function PaymentsTable({ rows }: { rows: PaymentRow[] }) {
       columns={columns}
       rows={rows}
       filename="payments"
-      bulkActions={[{ label: "Mark paid & advance", onClick: markPaidBulk }]}
+      bulkActions={[{ label: "Advance invoice dates", onClick: markPaidBulk }]}
     />
   );
 }

@@ -15,13 +15,14 @@ import {
   Legend,
 } from "recharts";
 
-const COLORS = ["#2563EB", "#E2E8F0"];
+const COLORS = ["#2563EB", "#E2E8F0", "#F59E0B"];
 const COLLECTION_COLORS = ["#16A34A", "#DC2626"];
 
-export function OccupancyPie({ rented, available }: { rented: number; available: number }) {
+export function OccupancyPie({ rented, available, unavailable }: { rented: number; available: number; unavailable: number }) {
   const data = [
     { name: "Rented", value: rented },
     { name: "Available", value: available },
+    { name: "Unavailable", value: unavailable },
   ];
   return (
     <ResponsiveContainer width="100%" height={200}>
@@ -79,7 +80,7 @@ export function PaymentHistoryArea({ data }: { data: { month: string; count: num
         <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
         <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#64748B" }} axisLine={{ stroke: "#E2E8F0" }} tickLine={false} />
         <YAxis tick={{ fontSize: 12, fill: "#64748B" }} axisLine={false} tickLine={false} allowDecimals={false} />
-        <Tooltip formatter={(v: any) => [`${v}`, "Invoices sent"]} />
+        <Tooltip formatter={(v: any) => [`${v}`, "Payments received"]} />
         <Area type="monotone" dataKey="count" stroke="#2563EB" fill="#2563EB" fillOpacity={0.15} strokeWidth={2} />
       </AreaChart>
     </ResponsiveContainer>

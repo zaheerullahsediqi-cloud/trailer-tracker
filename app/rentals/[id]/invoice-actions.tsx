@@ -36,7 +36,7 @@ export default function InvoiceActions({
   async function handleAdvance() {
     if (
       !confirm(
-        `Mark the period due ${nextDueDate} as paid and advance to the next due date? This can only be undone by manually editing the rental terms.`
+        `Advance the invoice date from ${nextDueDate}? This does not record a payment or reduce the balance. Record money received in Payments.`
       )
     ) {
       return;
@@ -65,7 +65,7 @@ export default function InvoiceActions({
           {sending ? "Sending..." : "Email invoice to renter"}
         </button>
         <button className="btn-secondary" onClick={handleAdvance} disabled={advancing}>
-          {advancing ? "Updating..." : "Mark period paid → advance due date"}
+          {advancing ? "Updating..." : "Advance invoice date"}
         </button>
       </div>
       {done && <p className="text-sm text-success">Invoice sent.</p>}

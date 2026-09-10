@@ -13,10 +13,19 @@ export async function fetchLogoForPdf(
 ): Promise<{ bytes: Uint8Array; contentType: string } | null> {
   if (!logoUrl) return null;
   try {
-    const res = await fetch(logoUrl);
+    const url = new URL(logoUrl);
+    const base = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!);
+    if (url.origin !== base.origin || !url.pathname.startsWith("/storage/v1/object/public/branding/")) return null;
+    const res = await fetch(url, { redirect: "error", signal: AbortSignal.timeout(5000) });
     if (!res.ok) return null;
     const contentType = res.headers.get("content-type") || "";
-    const arrayBuffer = await res.arrayBuffer();
+    if (!/^image\/(png|jpeg)(;|$)/i.test(contentType)) return null;
+    if (Number(res.headers.get("content-length")) > 5 * 1024 * 1024) return null;
+    const reader = res.body?.getReader();
+    if (!reader) return null;
+    const chunks: Uint8Array[] = []; let size = 0;
+    while (true) { const {value,done} = await reader.read(); if(done) break; size += value.length; if(size > 5*1024*1024) { await reader.cancel(); return null; } chunks.push(value); }
+    const arrayBuffer = Buffer.concat(chunks);
     return { bytes: new Uint8Array(arrayBuffer), contentType };
   } catch {
     return null;

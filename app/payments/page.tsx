@@ -1,43 +1,30 @@
 import { createClient } from "@/lib/supabase/server";
+import { loadBillingData } from "@/lib/billing-data";
+import { daysUntil } from "@/lib/billing";
 import PaymentsTable from "./payments-table";
 import PaymentHistoryTable from "./payment-history-table";
 
-function daysUntil(dateStr: string) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const due = new Date(dateStr);
-  return Math.round((due.getTime() - today.getTime()) / 86400000);
-}
 
 export default async function PaymentsPage() {
   const supabase = createClient();
-  const { data: rentals } = await supabase
-    .from("rentals")
-    .select("*, trailers(vin), renters(name)")
-    .eq("status", "active")
-    .order("next_due_date", { ascending: true });
-
-  const rows = (rentals ?? []).map((r: any) => {
-    const d = daysUntil(r.next_due_date);
+  const { rentals, payments: paymentRows, balances } = await loadBillingData(supabase);
+  const rows = rentals.filter(r => balances.get(r.id)!.nextUnpaid).map((r: any) => {
+    const balance = balances.get(r.id)!;
+    const d = daysUntil(balance.nextUnpaid!);
     const status = d < 0 ? "Overdue" : d <= 5 ? "Due Soon" : "Upcoming";
     return {
       id: r.id,
       vin: r.trailers?.vin || "—",
       renter: r.renters?.name || "—",
-      rate: Number(r.rate),
-      next_due_date: r.next_due_date,
+      rate: balance.outstanding + (d > 0 ? balance.upcoming : 0),
+      next_due_date: balance.nextUnpaid!,
       status: status as "Overdue" | "Due Soon" | "Upcoming",
       daysUntil: d,
     };
   });
 
   const totalDue = rows.reduce((sum, r) => sum + r.rate, 0);
-  const overdueTotal = rows.filter((r) => r.status === "Overdue").reduce((sum, r) => sum + r.rate, 0);
-
-  const { data: paymentRows } = await supabase
-    .from("payments")
-    .select("*, rentals(id, trailers(vin), renters(name))")
-    .order("payment_date", { ascending: false });
+  const overdueTotal = [...balances.values()].reduce((sum, b) => sum + b.overdue, 0);
 
   const historyRows = (paymentRows ?? []).map((p: any) => ({
     id: p.id,
@@ -57,7 +44,7 @@ export default async function PaymentsPage() {
         <p className="eyebrow">Billing</p>
         <h1 className="page-title mt-1">Payments</h1>
         <p className="text-sm text-muted mt-1">
-          {rows.length} active rental{rows.length === 1 ? "" : "s"} — ${totalDue.toFixed(2)} total,{" "}
+          {rows.length} rental with a balance{rows.length === 1 ? "" : "s"} — ${totalDue.toFixed(2)} total,{" "}
           <span className="text-danger font-medium">${overdueTotal.toFixed(2)} overdue</span>
         </p>
       </div>

@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { generateInvoicePdf } from "@/lib/invoice";
 import { getResend, FROM_EMAIL } from "@/lib/resend";
 import { getCompanySettings, fetchLogoForPdf } from "@/lib/settings";
-import { advanceByPeriod } from "@/lib/date";
 import { revalidatePath } from "next/cache";
 
 async function loadRentalBundle(rentalId: string) {
@@ -23,27 +22,28 @@ export async function sendInvoiceEmail(rentalId: string) {
   const { companyName, contactEmail, logoUrl } = await getCompanySettings(supabase);
   const logo = await fetchLogoForPdf(logoUrl);
 
-  const periodStart = rental.next_due_date;
-  const periodEnd = advanceByPeriod(rental.next_due_date, rental.period, rental.period_days);
-
-  const { count } = await supabase
-    .from("invoices")
-    .select("*", { count: "exact", head: true })
-    .eq("rental_id", rentalId);
-  const invoiceNumber = `${rental.trailers.vin.slice(-6)}-${String((count ?? 0) + 1).padStart(3, "0")}`;
-
+  if (!rental.renters.email) throw new Error('Add an email address for this renter first.');
+  const { data: invoice, error: reserveError } = await supabase.rpc('reserve_invoice', { p_rental_id: rentalId, p_snapshot: rental });
+  if (reserveError || !invoice) throw new Error(reserveError?.message || 'Could not reserve invoice');
+  if (invoice.sent_at || invoice.delivery_status === 'sent') throw new Error('This billing period already has a sent invoice.');
+  const { data: claimed, error: claimError } = await supabase.from('invoices').update({delivery_status:'sending', delivery_error:null}).eq('id',invoice.id).in('delivery_status',['pending','failed']).select('id').maybeSingle();
+  if (claimError || !claimed) throw new Error('Invoice is already sending or needs delivery review. Check invoice history before retrying.');
+  const invoiceNumber = invoice.invoice_number;
+  const snapshot = invoice.snapshot;
+  let sendData: any;
+  try {
   const pdfBytes = await generateInvoicePdf({
     invoiceNumber,
     companyName,
     companyEmail: contactEmail,
     logoBytes: logo?.bytes,
     logoContentType: logo?.contentType,
-    trailer: rental.trailers,
-    renter: rental.renters,
-    periodStart,
-    periodEnd,
-    rate: Number(rental.rate),
-    dueDate: rental.next_due_date,
+    trailer: snapshot.trailers,
+    renter: snapshot.renters,
+    periodStart: invoice.period_start,
+    periodEnd: invoice.period_end,
+    rate: Number(invoice.amount),
+    dueDate: invoice.period_start,
   });
 
   if (!rental.renters.email) {
@@ -51,19 +51,20 @@ export async function sendInvoiceEmail(rentalId: string) {
   }
 
   const resend = getResend();
-  const { data: sendData, error: sendError } = await resend.emails.send({
+  const { data, error: sendError } = await resend.emails.send({
     from: FROM_EMAIL,
-    to: rental.renters.email,
+    to: invoice.sent_to,
     subject: `Invoice ${invoiceNumber} — Trailer ${rental.trailers.vin}`,
-    text: `Hi ${rental.renters.name},\n\nPlease find attached your invoice for trailer ${rental.trailers.vin} (${rental.trailers.make} ${rental.trailers.model}) for the period ${periodStart} to ${periodEnd}.\n\nAmount due: $${Number(rental.rate).toFixed(2)}\nDue date: ${rental.next_due_date}\n\nThank you,\n${companyName}`,
+    text: `Please find attached invoice ${invoiceNumber}. Amount due: USD ${Number(invoice.amount).toFixed(2)}. Due date: ${invoice.period_start}.`,
     attachments: [
       {
         filename: `invoice-${invoiceNumber}.pdf`,
         content: Buffer.from(pdfBytes).toString("base64"),
       },
     ],
-  });
+  }, { idempotencyKey: invoice.id });
 
+  sendData = data;
   if (sendError) {
     throw new Error(`Resend rejected the email: ${sendError.message || JSON.stringify(sendError)}`);
   }
@@ -71,24 +72,19 @@ export async function sendInvoiceEmail(rentalId: string) {
     throw new Error("Resend did not confirm the email was sent. Check your RESEND_API_KEY and INVOICE_FROM_EMAIL.");
   }
 
-  await supabase.from("invoices").insert({
-    rental_id: rentalId,
-    invoice_number: invoiceNumber,
-    amount: rental.rate,
-    period_start: periodStart,
-    period_end: periodEnd,
-    sent_to: rental.renters.email,
-    sent_at: new Date().toISOString(),
-  });
-
+  } catch (error: any) {
+    // Delivery can be uncertain after a network failure: do not blindly resend.
+    await supabase.from('invoices').update({delivery_status:'review_required', delivery_error:error.message}).eq('id',invoice.id);
+    throw error;
+  }
+  const { error: saveError } = await supabase.from('invoices').update({delivery_status:'sent', email_id:sendData.id, sent_at:new Date().toISOString()}).eq('id',invoice.id).select('id').single();
+  if (saveError) throw new Error('Email provider accepted invoice ' + invoiceNumber + ', but delivery status could not be saved. Do not resend; review invoice history.');
   revalidatePath(`/rentals/${rentalId}`);
-  revalidatePath("/rentals");
+  revalidatePath("/", "layout");
 }
 
 export async function deleteRental(rentalId: string) {
-  const supabase = createClient();
-  const { error } = await supabase.from("rentals").delete().eq("id", rentalId);
-  if (error) throw new Error(error.message);
+  throw new Error("Rental history is preserved. Mark the rental completed instead.");
 }
 
 export async function recordPayment(rentalId: string, formData: FormData) {
@@ -98,7 +94,8 @@ export async function recordPayment(rentalId: string, formData: FormData) {
   const method = String(formData.get("method") || "other");
   const notes = String(formData.get("notes") || "").trim() || null;
 
-  if (amount <= 0) throw new Error("Enter a payment amount greater than $0.");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(payment_date) || !Number.isFinite(Date.parse(payment_date))) throw new Error("Enter a valid payment date.");
+  if (!Number.isFinite(amount) || amount <= 0) throw new Error("Enter a payment amount greater than $0.");
 
   const { error } = await supabase.from("payments").insert({
     rental_id: rentalId,
@@ -109,7 +106,7 @@ export async function recordPayment(rentalId: string, formData: FormData) {
   });
   if (error) throw new Error(error.message);
   revalidatePath(`/rentals/${rentalId}`);
-  revalidatePath("/payments");
+  revalidatePath("/", "layout");
   revalidatePath("/renters", "layout");
   revalidatePath("/");
   revalidatePath("/reports");
@@ -117,10 +114,10 @@ export async function recordPayment(rentalId: string, formData: FormData) {
 
 export async function deletePayment(id: string, rentalId: string) {
   const supabase = createClient();
-  const { error } = await supabase.from("payments").delete().eq("id", id);
+  const { error } = await supabase.from("payments").delete().eq("id", id).eq("rental_id", rentalId);
   if (error) throw new Error(error.message);
   revalidatePath(`/rentals/${rentalId}`);
-  revalidatePath("/payments");
+  revalidatePath("/", "layout");
   revalidatePath("/");
   revalidatePath("/reports");
 }

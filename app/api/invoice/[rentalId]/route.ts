@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateInvoicePdf } from "@/lib/invoice";
 import { getCompanySettings, fetchLogoForPdf } from "@/lib/settings";
-import { advanceByPeriod } from "@/lib/date";
+import { nextInvoiceDate } from "@/lib/billing";
 
 export async function GET(
   req: NextRequest,
@@ -24,7 +24,7 @@ export async function GET(
   const { companyName, contactEmail, logoUrl } = await getCompanySettings(supabase);
   const logo = await fetchLogoForPdf(logoUrl);
   const periodStart = rental.next_due_date;
-  const periodEnd = advanceByPeriod(rental.next_due_date, rental.period, rental.period_days);
+  const periodEnd = nextInvoiceDate(rental);
 
   const pdfBytes = await generateInvoicePdf({
     invoiceNumber: `${rental.trailers.vin.slice(-6)}-PREVIEW`,

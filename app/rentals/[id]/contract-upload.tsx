@@ -36,9 +36,12 @@ export default function ContractUpload({
       setUploading(false);
       return;
     }
-    await uploadContract(rentalId, path, file.name);
-    setUploading(false);
-    router.refresh();
+    try {
+      await uploadContract(rentalId, path, file.name);
+      router.refresh();
+    } catch (e: any) {
+      setError(e.message);
+    } finally { setUploading(false); }
   }
 
   return (

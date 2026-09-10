@@ -17,6 +17,7 @@ export default async function InvoicesPage() {
     amount: Number(inv.amount),
     sent_to: inv.sent_to,
     sent_at: inv.sent_at,
+    delivery_status: inv.delivery_status,
     rental_id: inv.rentals?.id ?? null,
   }));
 
@@ -25,7 +26,7 @@ export default async function InvoicesPage() {
       <div>
         <p className="eyebrow">Billing</p>
         <h1 className="page-title mt-1">Invoices</h1>
-        <p className="text-sm text-muted mt-1">Every invoice sent, across all rentals.</p>
+        <p className="text-sm text-muted mt-1">All invoices, including pending deliveries and deliveries needing review.</p>
       </div>
       <InvoicesTable rows={rows} />
     </div>

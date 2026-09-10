@@ -1,0 +1,43 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { PGlite } from '@electric-sql/pglite';
+test('database migration enforces rental, history, invoice and role safeguards',async()=>{
+ const db=new PGlite();
+ await db.exec(`create role authenticated; create role service_role; create schema auth; create schema storage;
+ create table auth.users(id uuid primary key, raw_app_meta_data jsonb);
+ create function auth.role() returns text language sql as $$ select coalesce(current_setting('request.jwt.claim.role',true),'authenticated') $$;
+ create function auth.uid() returns uuid language sql as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
+ create table storage.buckets(id text primary key,name text,public boolean);
+ create table storage.objects(id uuid default gen_random_uuid(),bucket_id text); alter table storage.objects enable row level security;
+ insert into auth.users values ('00000000-0000-0000-0000-000000000001','{}');`);
+ for(const name of ['schema.sql',...fs.readdirSync('supabase').filter(n=>/^migration_/.test(n)).sort()]) {
+  await db.exec(fs.readFileSync('supabase/'+name,'utf8').replace('create extension if not exists "pgcrypto";',''));
+ }
+ const t='10000000-0000-0000-0000-000000000001', c='20000000-0000-0000-0000-000000000001', r='30000000-0000-0000-0000-000000000001';
+ await db.exec(`insert into trailers(id,vin,make,model) values ('${t}','VIN','Make','Model'); insert into renters(id,name) values ('${c}','Customer');
+ insert into rentals(id,trailer_id,renter_id,start_date,next_due_date,rate) values ('${r}','${t}','${c}','2026-01-01','2026-02-01',100);`);
+ await assert.rejects(db.exec(`insert into rentals(trailer_id,renter_id,start_date,next_due_date) values ('${t}','${c}','2026-01-01','2026-02-01')`),/duplicate/);
+ await assert.rejects(db.exec(`update trailers set status='maintenance' where id='${t}'`),/Complete the active rental/);
+ await assert.rejects(db.exec(`delete from trailers where id='${t}'`),/foreign key/);
+ await assert.rejects(db.exec(`delete from renters where id='${c}'`),/foreign key/);
+ await assert.rejects(db.exec(`delete from rentals where id='${r}'`),/history is preserved/);
+ await assert.rejects(db.exec(`insert into payments(rental_id,amount) values ('${r}',-1)`),/check constraint/);
+ const sql=`select (reserve_invoice('${r}','{"renters":{"email":"customer@example.com"}}')).id`;
+ const a=await db.query(sql),b=await db.query(sql); assert.deepEqual(a.rows,b.rows);
+ await assert.rejects(db.exec(`update rentals set rate=200 where id='${r}'`),/Historical billing terms/);
+ await db.exec(`update rentals set status='completed' where id='${r}'; update trailers set status='maintenance' where id='${t}'`);
+ await assert.rejects(db.exec(`insert into rentals(trailer_id,renter_id,start_date,next_due_date) values ('${t}','${c}','2026-01-01','2026-02-01')`),/must be available/);
+ await db.exec(`grant usage on schema auth to authenticated; grant select on storage.objects to authenticated;
+ insert into auth.users values ('00000000-0000-0000-0000-000000000002','{}');
+ set role authenticated; select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',false);`);
+ assert.equal((await db.query<{admin:boolean}>('select tracker_admin() as admin')).rows[0].admin,false);
+ assert.equal((await db.query('select * from rentals')).rows.length,1);
+ await assert.rejects(db.exec("insert into renters(name) values ('Blocked')"),/row-level security/);
+ await db.exec("select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',false)");
+ assert.equal((await db.query<{admin:boolean}>('select tracker_admin() as admin')).rows[0].admin,true);
+ await db.exec("insert into renters(name) values ('Allowed')");
+ await db.exec("reset role; grant usage on schema public,auth to service_role; set role service_role; select set_config('request.jwt.claim.role','service_role',false)");
+ assert.equal((await db.query<{admin:boolean}>('select tracker_admin() as admin')).rows[0].admin,true);
+ await db.close();
+});

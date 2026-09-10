@@ -43,6 +43,9 @@ export async function updateTrailer(id: string, formData: FormData) {
 
 export async function deleteTrailer(id: string) {
   const supabase = createClient();
+  const { count, error: checkError } = await supabase.from("rentals").select("id", {count:"exact",head:true}).eq("trailer_id",id);
+  if (checkError) throw new Error(checkError.message);
+  if (count) throw new Error("This record has rental history and cannot be deleted.");
   const { error } = await supabase.from("trailers").delete().eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/trailers");

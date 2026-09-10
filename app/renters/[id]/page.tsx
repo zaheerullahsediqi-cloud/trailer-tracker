@@ -1,16 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
+import { rentalBalance, todayISO } from "@/lib/billing";
 import Link from "next/link";
 import NotesEdit from "./notes-edit";
 import LicenseUpload from "./license-upload";
 import { FileText, Receipt, Clock, Wallet, Contact } from "lucide-react";
 
-function daysUntil(dateStr: string) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const due = new Date(dateStr);
-  return Math.round((due.getTime() - today.getTime()) / 86400000);
-}
 
 export default async function CustomerProfilePage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -45,10 +40,8 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
 
   const list = rentals ?? [];
   const activeRental = list.find((r: any) => r.status === "active");
-  const balanceDue = list
-    .filter((r: any) => r.status === "active" && daysUntil(r.next_due_date) < 0)
-    .reduce((sum: number, r: any) => sum + Number(r.rate || 0), 0);
-  const totalCollected = (payments ?? []).reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+  const balanceDue = list.reduce((sum: number, r: any) => sum + rentalBalance(r, payments ?? [], invoices ?? []).outstanding, 0);
+  const totalCollected = (payments ?? []).filter((p: any) => p.payment_date <= todayISO()).reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
 
   const contractRentals = list.filter((r: any) => r.contract_url);
   const documents = await Promise.all(
@@ -158,7 +151,7 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
 
       <div>
         <p className="section-title mb-3 flex items-center gap-2">
-          <Receipt size={14} /> Invoices sent
+          <Receipt size={14} /> Invoices
         </p>
         <div className="card divide-y divide-border overflow-hidden">
           {(invoices ?? []).map((inv: any) => (
@@ -173,7 +166,7 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
             </div>
           ))}
           {(!invoices || invoices.length === 0) && (
-            <p className="text-sm text-muted px-5 py-4">No invoices sent yet.</p>
+            <p className="text-sm text-muted px-5 py-4">No invoices yet.</p>
           )}
         </div>
       </div>

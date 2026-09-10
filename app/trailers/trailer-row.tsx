@@ -163,9 +163,9 @@ export default function TrailerRow({ trailer }: { trailer: any }) {
         </button>
         <button
           className="btn-danger text-xs"
-          onClick={() => {
+          onClick={async () => {
             if (confirm("Delete this trailer? This cannot be undone.")) {
-              deleteTrailer(trailer.id);
+              try { await deleteTrailer(trailer.id); } catch (e: any) { alert(e.message); }
             }
           }}
         >
