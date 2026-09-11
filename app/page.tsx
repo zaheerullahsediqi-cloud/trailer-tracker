@@ -24,7 +24,7 @@ export default async function Dashboard() {
 
   const { rentals, trailers, payments, balances, today } = await loadBillingData(supabase);
   const list = rentals.filter(r => r.status === 'active');
-  const actionable = rentals.map(r => ({...r, next_due_date: balances.get(r.id)!.nextUnpaid})).filter(r => r.next_due_date);
+  const actionable = list.map(r => ({...r, next_due_date: balances.get(r.id)!.nextUnpaid})).filter(r => r.next_due_date);
   const overdue = actionable.filter(r => balances.get(r.id)!.overdue > 0);
   const dueSoon = actionable.filter(r => balances.get(r.id)!.overdue === 0 && balances.get(r.id)!.upcoming > 0);
   const upcoming = list.filter(r => !balances.get(r.id)!.nextUnpaid && balances.get(r.id)!.nextScheduled).map(r => ({...r, next_due_date: balances.get(r.id)!.nextScheduled}));

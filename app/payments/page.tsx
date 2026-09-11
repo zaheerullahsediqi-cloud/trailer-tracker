@@ -9,7 +9,7 @@ import PaymentHistoryTable from "./payment-history-table";
 export default async function PaymentsPage() {
   const supabase = createClient();
   const { rentals, payments: paymentRows, balances } = await loadBillingData(supabase);
-  const rows = rentals.filter(r => balances.get(r.id)!.nextUnpaid).map((r: any) => {
+  const rows = rentals.filter(r => r.status === 'active' && balances.get(r.id)!.nextUnpaid).map((r: any) => {
     const balance = balances.get(r.id)!;
     const d = daysUntil(balance.nextUnpaid!);
     const status = d < 0 ? "Overdue" : d <= 5 ? "Due Soon" : "Upcoming";
