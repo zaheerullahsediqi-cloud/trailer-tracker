@@ -84,7 +84,12 @@ export async function sendInvoiceEmail(rentalId: string) {
 }
 
 export async function deleteRental(rentalId: string) {
-  throw new Error("Rental history is preserved. Mark the rental completed instead.");
+  const supabase = createClient();
+  const { error } = await supabase.from("rentals").delete().eq("id", rentalId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/rentals");
+  revalidatePath("/history");
+  revalidatePath("/", "layout");
 }
 
 export async function recordPayment(rentalId: string, formData: FormData) {
