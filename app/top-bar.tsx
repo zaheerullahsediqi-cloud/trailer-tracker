@@ -108,10 +108,14 @@ export default function TopBar({
         <div className="relative" ref={profileRef}>
           <button
             onClick={() => setProfileOpen((v) => !v)}
-            className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="flex items-center gap-2.5 pl-1.5 pr-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            <div className="w-7 h-7 rounded-full bg-accent/10 text-accent flex items-center justify-center text-xs font-bold">
+            <div className="w-8 h-8 rounded-full bg-accent/10 text-accent flex items-center justify-center text-xs font-bold shrink-0">
               {userEmail?.[0]?.toUpperCase()}
+            </div>
+            <div className="hidden lg:block text-left leading-tight">
+              <p className="text-sm font-semibold text-primary dark:text-white truncate max-w-[140px]">{userEmail}</p>
+              <p className="text-[11px] text-muted">Fleet Manager</p>
             </div>
             <ChevronDown size={14} className="text-muted" />
           </button>

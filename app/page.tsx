@@ -1,60 +1,83 @@
-import BillingReviewNotice from "@/app/billing-review-notice";
 import { createClient } from "@/lib/supabase/server";
 import { loadBillingData } from "@/lib/billing-data";
-import { daysUntil, monthlyEquivalent } from "@/lib/billing";
+import { daysUntil } from "@/lib/billing";
 import Link from "next/link";
 import RevenueChart from "./revenue-chart";
 import {
   Truck,
   FileCheck,
-  DollarSign,
+  Wallet,
   AlertTriangle,
   Clock,
-  PackageCheck,
-  Gauge,
-  ArrowUpRight,
-  ArrowDownRight,
-  Wallet,
-  ShieldCheck,
+  FileText,
+  CreditCard,
+  Plus,
+  ArrowRight,
 } from "lucide-react";
-
 
 export default async function Dashboard() {
   const supabase = createClient();
 
   const { rentals, trailers, payments, balances, today } = await loadBillingData(supabase);
-  const list = rentals.filter(r => r.status === 'active');
-  const actionable = list.map(r => ({...r, next_due_date: balances.get(r.id)!.nextUnpaid})).filter(r => r.next_due_date);
-  const overdue = actionable.filter(r => balances.get(r.id)!.overdue > 0);
-  const dueSoon = actionable.filter(r => balances.get(r.id)!.overdue === 0 && balances.get(r.id)!.upcoming > 0);
-  const upcoming = list.filter(r => !balances.get(r.id)!.nextUnpaid && balances.get(r.id)!.nextScheduled).map(r => ({...r, next_due_date: balances.get(r.id)!.nextScheduled}));
-  const monthPayments = payments.filter(p => p.payment_date >= today.slice(0,7) + '-01');
-  const totalTrailers = trailers.filter(t => t.status !== "sold").length;
+  const list = rentals.filter((r: any) => r.status === "active");
+  const actionable = list
+    .map((r: any) => ({ ...r, next_due_date: balances.get(r.id)!.nextUnpaid }))
+    .filter((r: any) => r.next_due_date);
+  const overdue = actionable.filter((r: any) => balances.get(r.id)!.overdue > 0);
+  const dueSoon = actionable.filter((r: any) => balances.get(r.id)!.overdue === 0 && balances.get(r.id)!.upcoming > 0);
+  const monthPayments = payments.filter((p: any) => p.payment_date >= today.slice(0, 7) + "-01");
+  const totalTrailers = trailers.filter((t: any) => t.status !== "sold").length;
   const activeRentalCount = list.length;
-  const rentedTrailerIds = new Set(list.map((r: any) => r.trailer_id));
-  const availableTrailers = trailers.filter(t => t.status === "available" && !rentedTrailerIds.has(t.id)).length;
-  const occupancyRate = totalTrailers > 0 ? Math.round((rentedTrailerIds.size / totalTrailers) * 100) : 0;
-  const monthlyRevenue = list.reduce((sum: number, r: any) => sum + monthlyEquivalent(r), 0);
-  const outstandingBalance = [...balances.values()].reduce((sum, b) => sum + b.outstanding, 0);
-  const upcomingDueAmount = [...balances.values()].reduce((sum, b) => sum + b.upcoming, 0);
+  const collectedThisMonth = monthPayments.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+  const outstandingBalance = [...balances.values()].reduce((sum, b: any) => sum + b.outstanding, 0);
+  const needsReviewCount = [...balances.values()].filter((b: any) => b.needsReview).length;
 
-  const collectedThisMonth = (monthPayments ?? []).reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+  const rentalByTrailer = new Map<string, any>();
+  list.forEach((r: any) => rentalByTrailer.set(r.trailer_id, r));
+  const yourTrailers = trailers
+    .filter((t: any) => t.status !== "sold")
+    .slice(0, 3)
+    .map((t: any) => ({ ...t, rental: rentalByTrailer.get(t.id) }));
 
-  const depositsHeld = rentals.reduce((sum: number, r: any) => {
-    if (r.security_deposit_status === "held") return sum + Number(r.security_deposit_amount || 0);
-    if (r.security_deposit_status === "partially_returned") {
-      return sum + Math.max(Number(r.security_deposit_amount || 0) - Number(r.security_deposit_returned_amount || 0), 0);
-    }
-    return sum;
-  }, 0);
+  const needsAttention = [
+    ...overdue.map((r: any) => ({
+      kind: "overdue" as const,
+      rental: r,
+      due: r.next_due_date,
+      amount: balances.get(r.id)!.overdue,
+    })),
+    ...dueSoon.map((r: any) => ({
+      kind: "due_soon" as const,
+      rental: r,
+      due: r.next_due_date,
+      amount: balances.get(r.id)!.upcoming,
+    })),
+  ]
+    .sort((a, b) => daysUntil(a.due) - daysUntil(b.due))
+    .slice(0, 6);
 
-  const downPaymentsOutstanding = rentals.reduce((sum: number, r: any) => {
-    if (r.down_payment_status === "not_collected") return sum + Number(r.down_payment_amount || 0);
-    if (r.down_payment_status === "partially_collected") {
-      return sum + Math.max(Number(r.down_payment_amount || 0) - Number(r.down_payment_collected_amount || 0), 0);
-    }
-    return sum;
-  }, 0);
+  const recentPayments = [...payments]
+    .sort((a: any, b: any) => b.payment_date.localeCompare(a.payment_date))
+    .slice(0, 5);
+
+  const recentActivity = [
+    ...payments.map((p: any) => ({
+      type: "payment" as const,
+      date: p.payment_date,
+      title: "Payment received",
+      subtitle: `${p.rentals?.trailers?.vin ?? ""} · ${p.rentals?.renters?.name ?? ""}`,
+      amount: Number(p.amount),
+    })),
+    ...list.map((r: any) => ({
+      type: "rental" as const,
+      date: r.start_date,
+      title: "Rental started",
+      subtitle: `${r.trailers?.vin ?? ""} · ${r.renters?.name ?? ""}`,
+      amount: null as number | null,
+    })),
+  ]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 6);
 
   const nowUtc = new Date();
   const months: { key: string; month: string; revenue: number }[] = [];
@@ -68,46 +91,41 @@ export default async function Dashboard() {
       revenue: 0,
     });
   }
-  payments.forEach((inv: any) => {
-    if (!inv.payment_date) return;
-    const d = new Date(inv.payment_date);
+  payments.forEach((p: any) => {
+    if (!p.payment_date) return;
+    const d = new Date(p.payment_date);
     const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
     const bucket = months.find((m) => m.key === key);
-    if (bucket) bucket.revenue += parseFloat(inv.amount) || 0;
+    if (bucket) bucket.revenue += parseFloat(p.amount) || 0;
   });
 
   const stats = [
-    { label: "Current Fleet", value: totalTrailers, icon: Truck, tint: "bg-accent/10 text-accent" },
-    { label: "Active Rentals", value: activeRentalCount, icon: FileCheck, tint: "bg-success/10 text-success" },
+    { label: "Current fleet", sub: "Trailers in your fleet", value: totalTrailers, icon: Truck },
+    { label: "Active rentals", sub: "Trailers on rent", value: activeRentalCount, icon: FileCheck },
     {
-      label: "Monthly Rent (estimated)",
-      value: `$${monthlyRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-      icon: DollarSign,
-      tint: "bg-accent/10 text-accent",
+      label: "Collected this month",
+      sub: "Rental payments received",
+      value: `$${collectedThisMonth.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+      icon: Wallet,
     },
     {
-      label: "Outstanding Balance",
+      label: "Outstanding",
+      sub: `Across ${overdue.length} overdue payment${overdue.length === 1 ? "" : "s"}`,
       value: `$${outstandingBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-      icon: AlertTriangle,
-      tint: "bg-danger/10 text-danger",
+      icon: CreditCard,
     },
-    {
-      label: "Upcoming Due",
-      value: `$${upcomingDueAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-      icon: Clock,
-      tint: "bg-warning/10 text-warning",
-    },
-    { label: "Late Payments", value: overdue.length, icon: AlertTriangle, tint: "bg-danger/10 text-danger" },
-    { label: "Available Trailers", value: availableTrailers, icon: PackageCheck, tint: "bg-success/10 text-success" },
-    { label: "Occupancy Rate", value: `${occupancyRate}%`, icon: Gauge, tint: "bg-accent/10 text-accent" },
   ];
 
   return (
     <div className="space-y-8">
-      <BillingReviewNotice count={[...balances.values()].filter(b => b.needsReview).length} />
-      <div>
-        <p className="eyebrow">Fleet overview</p>
-        <h1 className="page-title mt-1">Dashboard</h1>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="page-title text-[28px]">Fleet overview</h1>
+          <p className="text-sm text-muted mt-1">Your fleet, clearly organized.</p>
+        </div>
+        <Link href="/rentals" className="btn-primary">
+          <Plus size={16} /> New rental
+        </Link>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -115,135 +133,188 @@ export default async function Dashboard() {
           const Icon = s.icon;
           return (
             <div key={s.label} className="stat-card">
-              <div className={`stat-icon ${s.tint}`}>
-                <Icon size={19} strokeWidth={2} />
+              <div className="stat-icon bg-accent/10 text-accent">
+                <Icon size={18} strokeWidth={2} />
               </div>
               <div>
-                <p className="text-2xl font-bold text-primary tabular-nums">{s.value}</p>
-                <p className="text-xs text-muted font-medium mt-0.5">{s.label}</p>
+                <p className="text-2xl font-bold text-primary dark:text-white tabular-nums">{s.value}</p>
+                <p className="text-sm font-medium text-primary dark:text-slate-200 mt-1">{s.label}</p>
+                <p className="text-xs text-muted mt-0.5">{s.sub}</p>
               </div>
             </div>
           );
         })}
       </div>
 
-      <div>
-        <p className="section-title mb-3">Cash Position</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="stat-card">
-            <div className="stat-icon bg-success/10 text-success">
-              <Wallet size={19} strokeWidth={2} />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-primary tabular-nums">
-                ${collectedThisMonth.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-              </p>
-              <p className="text-xs text-muted font-medium mt-0.5">Collected This Month (actual)</p>
-            </div>
+      <div className="grid lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="section-title">Your trailers</p>
+            <Link href="/trailers" className="text-sm text-accent font-medium flex items-center gap-1">
+              View all trailers <ArrowRight size={14} />
+            </Link>
           </div>
-          <div className="stat-card">
-            <div className="stat-icon bg-accent/10 text-accent">
-              <ShieldCheck size={19} strokeWidth={2} />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-primary tabular-nums">
-                ${depositsHeld.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          <div className="grid sm:grid-cols-3 gap-4">
+            {yourTrailers.map((t: any) => (
+              <div key={t.id} className="card overflow-hidden">
+                <div className="aspect-[4/3] bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                  <Truck size={36} className="text-white/30" strokeWidth={1.5} />
+                </div>
+                <div className="p-4 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-semibold text-sm text-primary dark:text-white truncate">
+                      {t.unit_number || t.vin.slice(-6)}
+                    </p>
+                    <span className={t.rental ? "badge-success" : "badge-neutral"}>
+                      {t.rental ? "Rented" : "Available"}
+                    </span>
+                  </div>
+                  {t.rental ? (
+                    <div className="text-xs text-muted space-y-0.5">
+                      <p>Renter: {t.rental.renters?.name}</p>
+                      <p>Rental since: {t.rental.start_date}</p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted">No active rental</p>
+                  )}
+                  <Link href="/trailers" className="text-xs text-accent font-medium flex items-center gap-1 pt-1">
+                    View trailer <ArrowRight size={12} />
+                  </Link>
+                </div>
+              </div>
+            ))}
+            {yourTrailers.length === 0 && (
+              <p className="text-sm text-muted sm:col-span-3">
+                No trailers yet.{" "}
+                <Link href="/trailers" className="text-accent underline">
+                  Add one
+                </Link>
+                .
               </p>
-              <p className="text-xs text-muted font-medium mt-0.5">Security Deposits Held</p>
-            </div>
+            )}
           </div>
-          <div className="stat-card">
-            <div className="stat-icon bg-warning/10 text-warning">
-              <DollarSign size={19} strokeWidth={2} />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-primary tabular-nums">
-                ${downPaymentsOutstanding.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-              </p>
-              <p className="text-xs text-muted font-medium mt-0.5">Down Payments Outstanding</p>
-            </div>
-          </div>
+        </div>
+
+        <div className="card p-5 space-y-1">
+          <p className="section-title mb-3">Needs attention</p>
+          {needsAttention.length === 0 && <p className="text-sm text-muted">Nothing needs attention right now.</p>}
+          {needsAttention.map((item, i) => {
+            const r = item.rental;
+            const isOverdue = item.kind === "overdue";
+            return (
+              <Link
+                key={i}
+                href={`/rentals/${r.id}`}
+                className="flex items-start gap-3 py-2.5 border-b border-border dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 -mx-2 px-2 rounded-lg transition-colors"
+              >
+                <div
+                  className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                    isOverdue ? "bg-danger/10 text-danger" : "bg-warning/10 text-warning"
+                  }`}
+                >
+                  {isOverdue ? <AlertTriangle size={13} /> : <Clock size={13} />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-primary dark:text-white truncate">
+                    {r.trailers?.vin ? `Trailer ${r.trailers.vin.slice(-6)}` : "Rental"}
+                  </p>
+                  <p className={`text-xs ${isOverdue ? "text-danger" : "text-warning"}`}>
+                    {isOverdue ? "Payment overdue" : "Upcoming payment"}
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-sm font-semibold text-primary dark:text-white">${item.amount.toFixed(0)}</p>
+                  <p className="text-xs text-muted">{item.due}</p>
+                </div>
+              </Link>
+            );
+          })}
+          {needsReviewCount > 0 && (
+            <Link
+              href="/history"
+              className="flex items-center gap-1 text-xs text-accent font-medium pt-3 mt-2 border-t border-border dark:border-slate-800"
+            >
+              {needsReviewCount} historical record{needsReviewCount === 1 ? "" : "s"} to review
+              <ArrowRight size={12} />
+            </Link>
+          )}
         </div>
       </div>
 
       <div className="card p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="section-title">Revenue Trend</p>
-            <p className="text-xs text-muted mt-0.5">Payments received by month, last 6 months</p>
-          </div>
-        </div>
+        <p className="section-title mb-1">Revenue Trend</p>
+        <p className="text-xs text-muted mb-4">Payments received by month, last 6 months</p>
         <RevenueChart data={months} />
       </div>
 
-      <div className="space-y-6">
-        <Section title="Overdue" tone="danger" rentals={overdue} emptyText="Nothing overdue." />
-        <Section title="Due within 5 days" tone="warning" rentals={dueSoon} emptyText="Nothing due soon." />
-        <Section title="Upcoming" tone="success" rentals={upcoming} emptyText="No other active rentals." />
-      </div>
-
-      {list.length === 0 && (
-        <p className="text-muted text-sm">
-          No active rentals yet.{" "}
-          <Link href="/rentals" className="text-accent underline font-medium">
-            Create one
-          </Link>
-          .
-        </p>
-      )}
-    </div>
-  );
-}
-
-function Section({
-  title,
-  tone,
-  rentals,
-  emptyText,
-}: {
-  title: string;
-  tone: "danger" | "warning" | "success";
-  rentals: any[];
-  emptyText: string;
-}) {
-  if (rentals.length === 0) return null;
-  const toneClass = { danger: "text-danger", warning: "text-warning", success: "text-success" }[tone];
-  const badgeClass = { danger: "badge-danger", warning: "badge-warning", success: "badge-success" }[tone];
-  const TrendIcon = tone === "danger" ? ArrowDownRight : ArrowUpRight;
-
-  return (
-    <div>
-      <h2 className="section-title mb-3 flex items-center gap-2">
-        {title}
-        <span className={badgeClass}>{rentals.length}</span>
-      </h2>
-      <div className="card divide-y divide-border overflow-hidden">
-        {rentals.map((r: any) => {
-          const d = daysUntil(r.next_due_date);
-          return (
-            <Link
-              key={r.id}
-              href={`/rentals/${r.id}`}
-              className="flex items-center justify-between px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-150"
-            >
-              <div>
-                <p className="plate">{r.trailers?.vin}</p>
-                <p className="text-sm text-primary font-medium mt-0.5">
-                  {r.trailers?.make} {r.trailers?.model} — {r.renters?.name}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <TrendIcon size={14} className={toneClass} />
-                <div className="text-right">
-                  <p className={`text-sm font-semibold ${toneClass}`}>
-                    {d < 0 ? `${Math.abs(d)}d overdue` : d === 0 ? "Due today" : `Due in ${d}d`}
-                  </p>
-                  <p className="text-xs text-muted">{r.next_due_date}</p>
+      <div className="grid lg:grid-cols-2 gap-6">
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <p className="section-title">Recent activity</p>
+          </div>
+          <div className="card divide-y divide-border dark:divide-slate-800 overflow-hidden">
+            {recentActivity.map((a, i) => (
+              <div key={i} className="flex items-center justify-between gap-3 px-5 py-3.5">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-accent/10 text-accent flex items-center justify-center shrink-0">
+                    {a.type === "payment" ? <CreditCard size={14} /> : <FileText size={14} />}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-primary dark:text-white">{a.title}</p>
+                    <p className="text-xs text-muted truncate">{a.subtitle}</p>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  {a.amount != null && <p className="text-sm font-semibold text-success">+${a.amount.toFixed(0)}</p>}
+                  <p className="text-xs text-muted">{a.date}</p>
                 </div>
               </div>
+            ))}
+            {recentActivity.length === 0 && <p className="text-sm text-muted px-5 py-4">No activity yet.</p>}
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <p className="section-title">Recent payments</p>
+            <Link href="/payments" className="text-sm text-accent font-medium flex items-center gap-1">
+              View all payments <ArrowRight size={14} />
             </Link>
-          );
-        })}
+          </div>
+          <div className="card overflow-hidden">
+            <table className="dtable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Trailer</th>
+                  <th>Renter</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentPayments.map((p: any) => (
+                  <tr key={p.id}>
+                    <td>{p.payment_date}</td>
+                    <td className="plate">{p.rentals?.trailers?.vin?.slice(-6) ?? "—"}</td>
+                    <td>{p.rentals?.renters?.name ?? "—"}</td>
+                    <td>${Number(p.amount).toFixed(0)}</td>
+                    <td>
+                      <span className="badge-success">Paid</span>
+                    </td>
+                  </tr>
+                ))}
+                {recentPayments.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="text-center text-muted py-6">
+                      No payments recorded yet.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );

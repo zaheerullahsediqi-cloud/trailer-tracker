@@ -6,19 +6,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: "#0F172A",
+        primary: "#0B1B33",
         secondary: "#1E293B",
         accent: {
-          DEFAULT: "#2563EB",
-          light: "#3B82F6",
-          dark: "#1D4ED8",
+          DEFAULT: "#2454E0",
+          light: "#5478E8",
+          dark: "#1B3FB8",
         },
         success: "#16A34A",
-        warning: "#F59E0B",
+        warning: "#D97706",
         danger: "#DC2626",
-        surface: "#F8FAFC",
-        muted: "#64748B",
-        border: "#E2E8F0",
+        surface: "#FAF9F6",
+        muted: "#6B7280",
+        border: "#E8E6E0",
       },
       fontFamily: {
         sans: ["'Inter'", "sans-serif"],
