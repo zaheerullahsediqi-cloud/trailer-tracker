@@ -51,6 +51,25 @@ export async function deleteTrailer(id: string) {
   revalidatePath("/trailers");
 }
 
+export async function uploadTrailerPhoto(trailerId: string, path: string) {
+  const supabase = createClient();
+  const { error } = await supabase.from("trailers").update({ photo_url: path }).eq("id", trailerId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/trailers");
+  revalidatePath(`/trailers/${trailerId}`);
+  revalidatePath("/");
+}
+
+export async function deleteTrailerPhoto(trailerId: string, path: string) {
+  const supabase = createClient();
+  await supabase.storage.from("trailer-photos").remove([path]);
+  const { error } = await supabase.from("trailers").update({ photo_url: null }).eq("id", trailerId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/trailers");
+  revalidatePath(`/trailers/${trailerId}`);
+  revalidatePath("/");
+}
+
 export async function uploadTrailerDocument(
   trailerId: string,
   docType: "registration" | "insurance",
@@ -65,6 +84,7 @@ export async function uploadTrailerDocument(
   const { error } = await supabase.from("trailers").update(update).eq("id", trailerId);
   if (error) throw new Error(error.message);
   revalidatePath("/trailers");
+  revalidatePath(`/trailers/${trailerId}`);
 }
 
 export async function deleteTrailerDocument(
@@ -81,4 +101,5 @@ export async function deleteTrailerDocument(
   const { error } = await supabase.from("trailers").update(update).eq("id", trailerId);
   if (error) throw new Error(error.message);
   revalidatePath("/trailers");
+  revalidatePath(`/trailers/${trailerId}`);
 }

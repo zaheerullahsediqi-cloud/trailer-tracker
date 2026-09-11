@@ -157,9 +157,17 @@ export default async function Dashboard() {
           <div className="grid sm:grid-cols-3 gap-4">
             {yourTrailers.map((t: any) => (
               <div key={t.id} className="card overflow-hidden">
-                <div className="aspect-[4/3] bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                  <Truck size={36} className="text-white/30" strokeWidth={1.5} />
-                </div>
+                {t.photo_url ? (
+                  <img
+                    src={supabase.storage.from("trailer-photos").getPublicUrl(t.photo_url).data.publicUrl}
+                    alt={t.vin}
+                    className="w-full aspect-[4/3] object-cover"
+                  />
+                ) : (
+                  <div className="aspect-[4/3] bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                    <Truck size={36} className="text-white/30" strokeWidth={1.5} />
+                  </div>
+                )}
                 <div className="p-4 space-y-2">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-semibold text-sm text-primary dark:text-white truncate">
@@ -177,7 +185,7 @@ export default async function Dashboard() {
                   ) : (
                     <p className="text-xs text-muted">No active rental</p>
                   )}
-                  <Link href="/trailers" className="text-xs text-accent font-medium flex items-center gap-1 pt-1">
+                  <Link href={`/trailers/${t.id}`} className="text-xs text-accent font-medium flex items-center gap-1 pt-1">
                     View trailer <ArrowRight size={12} />
                   </Link>
                 </div>

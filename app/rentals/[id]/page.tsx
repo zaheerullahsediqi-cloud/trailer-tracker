@@ -1,6 +1,7 @@
 import BillingReviewNotice from "@/app/billing-review-notice";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import ContractUpload from "./contract-upload";
 import LicenseUpload from "@/app/renters/[id]/license-upload";
 import TrailerDocuments from "@/app/trailers/trailer-documents";
@@ -99,6 +100,9 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
           <p className="text-secondary text-sm mt-0.5">
             {rental.trailers.year} {rental.trailers.make} {rental.trailers.model}
           </p>
+          <Link href={`/trailers/${rental.trailers.id}`} className="text-xs text-accent font-medium inline-block mt-1">
+            View trailer →
+          </Link>
         </div>
         <RentalControls rentalId={rental.id} status={rental.status} />
       </div>

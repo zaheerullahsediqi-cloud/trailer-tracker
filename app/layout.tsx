@@ -47,7 +47,7 @@ export default async function RootLayout({
           <div className="flex-1 min-w-0">
             <MobileNav userEmail={user?.email ?? null} companyName={companyName} logoUrl={logoUrl} />
             {user && <TopBar alertCount={alertCount} userEmail={user.email ?? ""} />}
-            <main className="max-w-7xl mx-auto px-4 md:px-8 py-8 animate-in">{children}</main>
+            <main className="max-w-7xl mx-auto px-4 md:px-8 py-8 pb-24 md:pb-8 animate-in">{children}</main>
           </div>
         </div>
       </body>

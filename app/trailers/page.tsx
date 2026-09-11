@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { loadBillingData } from "@/lib/billing-data";
 import { addTrailer } from "./actions";
-import TrailerRow from "./trailer-row";
+import TrailerList from "./trailer-list";
 
 
 export default async function TrailersPage() {
@@ -37,7 +37,10 @@ export default async function TrailersPage() {
         const { data } = await supabase.storage.from("documents").createSignedUrl(t.insurance_url, 60 * 60);
         insuranceUrl = data?.signedUrl ?? null;
       }
-      return { ...t, rental, paymentStatus, registrationUrl, insuranceUrl };
+      const photoUrl = t.photo_url
+        ? supabase.storage.from("trailer-photos").getPublicUrl(t.photo_url).data.publicUrl
+        : null;
+      return { ...t, rental, paymentStatus, registrationUrl, insuranceUrl, photoUrl };
     })
   );
 
@@ -96,14 +99,7 @@ export default async function TrailersPage() {
         </div>
       </form>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        {enriched.filter((t: any) => t.status !== "sold").map((t: any) => (
-          <TrailerRow key={t.id} trailer={t} />
-        ))}
-        {enriched.length === 0 && (
-          <p className="text-muted text-sm sm:col-span-2">No trailers yet. Add your first one above.</p>
-        )}
-      </div>
+      <TrailerList trailers={enriched.filter((t: any) => t.status !== "sold")} />
     </div>
   );
 }

@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/client";
 import ThemeToggle from "./theme-toggle";
 import {
   Package,
-  Menu,
   X,
   History,
   LayoutDashboard,
@@ -19,14 +18,18 @@ import {
   Bell,
   Settings,
   LogOut,
+  MoreHorizontal,
 } from "lucide-react";
 
-const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/trailers", label: "Trailers", icon: Truck },
-  { href: "/renters", label: "Customers", icon: Users },
+const bottomTabs = [
+  { href: "/", label: "Home", icon: LayoutDashboard },
+  { href: "/trailers", label: "Fleet", icon: Truck },
   { href: "/rentals", label: "Rentals", icon: FileText },
   { href: "/history", label: "History", icon: History },
+];
+
+const moreItems = [
+  { href: "/renters", label: "Customers", icon: Users },
   { href: "/payments", label: "Payments", icon: CreditCard },
   { href: "/invoices", label: "Invoices", icon: Receipt },
   { href: "/reports", label: "Reports", icon: BarChart3 },
@@ -43,19 +46,21 @@ export default function MobileNav({
   companyName: string;
   logoUrl: string | null;
 }) {
-  const [open, setOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
 
   if (!userEmail) return null;
 
+  const isMoreActive = moreItems.some((i) => pathname?.startsWith(i.href));
+
   return (
     <>
       <header className="md:hidden bg-primary text-white sticky top-0 z-30 flex items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center gap-2 min-w-0">
           {logoUrl ? (
-            <img src={logoUrl} alt={companyName} className="w-7 h-7 rounded-md object-contain bg-white/5 shrink-0" />
+            <img src={logoUrl} alt={companyName} className="w-7 h-7 rounded-md object-contain bg-white/95 p-0.5 shrink-0" />
           ) : (
             <div className="w-7 h-7 rounded-md bg-accent flex items-center justify-center shrink-0">
               <Package size={14} className="text-white" />
@@ -63,52 +68,84 @@ export default function MobileNav({
           )}
           <span className="font-bold text-sm truncate">{companyName}</span>
         </Link>
-        <div className="flex items-center gap-1">
-          <ThemeToggle />
-          <button onClick={() => setOpen(true)} className="p-2">
-            <Menu size={20} />
-          </button>
-        </div>
+        <ThemeToggle />
       </header>
 
-      {open && (
-        <div className="md:hidden fixed inset-0 z-40 bg-primary text-white flex flex-col animate-in">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-            <span className="font-bold text-sm">Menu</span>
-            <button onClick={() => setOpen(false)} className="p-2">
-              <X size={20} />
-            </button>
-          </div>
-          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${
-                    pathname === item.href ? "bg-white/10 text-white" : "text-slate-300"
-                  }`}
-                >
-                  <Icon size={18} />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-          <div className="px-4 py-4 border-t border-white/10">
-            <p className="text-xs text-slate-400 truncate mb-2">{userEmail}</p>
-            <button
-              onClick={async () => {
-                await supabase.auth.signOut();
-                router.push("/login");
-                router.refresh();
-              }}
-              className="flex items-center gap-2 text-sm text-danger"
+      {/* Persistent bottom nav bar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-slate-900 border-t border-border dark:border-slate-800 flex items-stretch pb-[env(safe-area-inset-bottom)]">
+        {bottomTabs.map((item) => {
+          const Icon = item.icon;
+          const active = item.href === "/" ? pathname === "/" : pathname?.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[11px] font-medium ${
+                active ? "text-accent" : "text-muted"
+              }`}
             >
-              <LogOut size={14} /> Log out
-            </button>
+              <Icon size={20} strokeWidth={active ? 2.3 : 2} />
+              {item.label}
+            </Link>
+          );
+        })}
+        <button
+          onClick={() => setMoreOpen(true)}
+          className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[11px] font-medium ${
+            isMoreActive ? "text-accent" : "text-muted"
+          }`}
+        >
+          <MoreHorizontal size={20} strokeWidth={isMoreActive ? 2.3 : 2} />
+          More
+        </button>
+      </nav>
+
+      {/* Slide-up "More" sheet */}
+      {moreOpen && (
+        <div className="md:hidden fixed inset-0 z-40" onClick={() => setMoreOpen(false)}>
+          <div className="absolute inset-0 bg-black/40 animate-in" />
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="absolute bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-2xl pb-[env(safe-area-inset-bottom)] animate-in max-h-[75vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between px-5 pt-4 pb-2">
+              <p className="font-bold text-primary dark:text-white">More</p>
+              <button onClick={() => setMoreOpen(false)} className="p-1 text-muted">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="px-3 pb-2">
+              {moreItems.map((item) => {
+                const Icon = item.icon;
+                const active = pathname?.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMoreOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium ${
+                      active ? "bg-accent/10 text-accent" : "text-primary dark:text-slate-200"
+                    }`}
+                  >
+                    <Icon size={18} />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+            <div className="px-5 py-4 border-t border-border dark:border-slate-800 flex items-center justify-between">
+              <p className="text-xs text-muted truncate">{userEmail}</p>
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  router.push("/login");
+                  router.refresh();
+                }}
+                className="flex items-center gap-1.5 text-sm text-danger font-medium"
+              >
+                <LogOut size={14} /> Log out
+              </button>
+            </div>
           </div>
         </div>
       )}
