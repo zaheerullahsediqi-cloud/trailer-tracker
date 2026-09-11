@@ -95,10 +95,14 @@ export async function updateRentalTerms(id: string, formData: FormData) {
   const rate = Number(formData.get("rate") || 0);
   const next_due_date = String(formData.get("next_due_date"));
   const period_days = periodToDays(period, customDays);
+  const endDateRaw = String(formData.get("end_date") || "");
+  const end_date = endDateRaw || null;
+  const completionNoteRaw = String(formData.get("completion_note") || "").trim();
+  const completion_note = completionNoteRaw || null;
 
   const { error } = await supabase
     .from("rentals")
-    .update({ start_date, period, period_days, rate, next_due_date })
+    .update({ start_date, period, period_days, rate, next_due_date, end_date, completion_note })
     .eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath(`/rentals/${id}`);

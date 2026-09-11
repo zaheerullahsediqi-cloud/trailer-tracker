@@ -56,6 +56,24 @@ export default function RentalTermsEdit({ rental }: { rental: any }) {
           <label className="label">Next invoice date</label>
           <input name="next_due_date" type="date" defaultValue={rental.next_due_date} required className="input" />
         </div>
+        {rental.status !== "active" && (
+          <>
+            <div>
+              <label className="label">End date (actual — when it really ended)</label>
+              <input name="end_date" type="date" defaultValue={rental.end_date ?? ""} className="input" />
+            </div>
+            <div>
+              <label className="label">Note (e.g. early termination, original term, reason)</label>
+              <textarea
+                name="completion_note"
+                defaultValue={rental.completion_note ?? ""}
+                rows={2}
+                className="input"
+                placeholder="e.g. Early terminated — original 6-month term was to run through Jan 31, 2027"
+              />
+            </div>
+          </>
+        )}
         <div className="flex gap-2">
           <button className="btn-primary" disabled={saving}>
             {saving ? "Saving..." : "Save"}
@@ -80,6 +98,11 @@ export default function RentalTermsEdit({ rental }: { rental: any }) {
       <p className="text-sm">Billing period: {periodLabel(rental.period, rental.period_days)}</p>
       <p className="text-sm">Rate: ${Number(rental.rate).toFixed(2)}</p>
       <p className="text-sm text-accent">Next invoice: {rental.next_due_date}</p>
+      {rental.status !== "active" && (
+        <p className={`text-sm ${rental.end_date ? "text-muted" : "text-warning"}`}>
+          End date: {rental.end_date || "Not set — click Edit to add it"}
+        </p>
+      )}
     </div>
   );
 }
