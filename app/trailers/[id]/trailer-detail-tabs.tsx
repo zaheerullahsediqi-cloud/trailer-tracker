@@ -169,6 +169,33 @@ export default function TrailerDetailTabs({
               <label className="label">Year</label>
               <input name="year" type="number" defaultValue={trailer.year ?? ""} className="input" />
             </div>
+            <div>
+              <label className="label">Length (ft)</label>
+              <input name="length_ft" type="number" step="0.1" defaultValue={trailer.length_ft ?? ""} className="input" />
+            </div>
+            <div>
+              <label className="label">Capacity (lbs)</label>
+              <input name="capacity_lbs" type="number" defaultValue={trailer.capacity_lbs ?? ""} className="input" />
+            </div>
+            <div className="sm:col-span-2 border-t border-border dark:border-slate-800 pt-3 mt-1">
+              <p className="eyebrow mb-2">If sold</p>
+            </div>
+            <div>
+              <label className="label">Sold date</label>
+              <input name="sold_date" type="date" defaultValue={trailer.sold_date ?? ""} className="input" />
+            </div>
+            <div>
+              <label className="label">Sold price ($)</label>
+              <input name="sold_price" type="number" step="0.01" defaultValue={trailer.sold_price ?? ""} className="input" />
+            </div>
+            <div>
+              <label className="label">Buyer name</label>
+              <input name="buyer_name" defaultValue={trailer.buyer_name ?? ""} className="input" />
+            </div>
+            <div>
+              <label className="label">Note</label>
+              <input name="sold_note" defaultValue={trailer.sold_note ?? ""} className="input" placeholder="Optional note about the sale" />
+            </div>
             <div className="sm:col-span-2 flex gap-2">
               <button className="btn-primary" disabled={saving}>
                 {saving ? "Saving..." : "Save"}
@@ -194,6 +221,18 @@ export default function TrailerDetailTabs({
                 <p><span className="text-muted">Plate type:</span> {trailer.plate_type || "—"}</p>
                 <p><span className="text-muted">Trailer type:</span> {trailer.trailer_type || "—"}</p>
                 <p><span className="text-muted">Last service:</span> {trailer.last_service_date || "—"}</p>
+                {(trailer.length_ft || trailer.capacity_lbs) && (
+                  <p><span className="text-muted">Specs:</span> {trailer.length_ft ? `${trailer.length_ft}' length` : ""}{trailer.length_ft && trailer.capacity_lbs ? " · " : ""}{trailer.capacity_lbs ? `${Number(trailer.capacity_lbs).toLocaleString()} lbs` : ""}</p>
+                )}
+                {trailer.status === "sold" && (
+                  <div className="pt-2 mt-2 border-t border-border dark:border-slate-800">
+                    <p className="eyebrow mb-1">Sold record</p>
+                    {trailer.sold_date && <p><span className="text-muted">Sold:</span> {trailer.sold_date}</p>}
+                    {trailer.buyer_name && <p><span className="text-muted">Buyer:</span> {trailer.buyer_name}</p>}
+                    {trailer.sold_price && <p><span className="text-muted">Price:</span> ${Number(trailer.sold_price).toLocaleString()}</p>}
+                    {trailer.sold_note && <p className="text-muted italic mt-1">{trailer.sold_note}</p>}
+                  </div>
+                )}
               </div>
             </div>
             <div className="card p-5">

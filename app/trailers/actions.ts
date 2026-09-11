@@ -36,10 +36,19 @@ export async function updateTrailer(id: string, formData: FormData) {
   const plate_type = String(formData.get("plate_type") || "").trim() || null;
   const trailer_type = String(formData.get("trailer_type") || "").trim() || null;
   const last_service_date = String(formData.get("last_service_date") || "") || null;
+  const length_ft = formData.get("length_ft") ? Number(formData.get("length_ft")) : null;
+  const capacity_lbs = formData.get("capacity_lbs") ? Number(formData.get("capacity_lbs")) : null;
+  const sold_date = String(formData.get("sold_date") || "") || null;
+  const sold_price = formData.get("sold_price") ? Number(formData.get("sold_price")) : null;
+  const buyer_name = String(formData.get("buyer_name") || "").trim() || null;
+  const sold_note = String(formData.get("sold_note") || "").trim() || null;
 
   const { error } = await supabase
     .from("trailers")
-    .update({ vin, make, model, year, plate, unit_number, status, title_number, plate_type, trailer_type, last_service_date })
+    .update({
+      vin, make, model, year, plate, unit_number, status, title_number, plate_type, trailer_type, last_service_date,
+      length_ft, capacity_lbs, sold_date, sold_price, buyer_name, sold_note,
+    })
     .eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/trailers");

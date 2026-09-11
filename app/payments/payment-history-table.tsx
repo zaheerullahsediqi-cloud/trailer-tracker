@@ -1,6 +1,7 @@
 "use client";
 import DataTable, { Column } from "../data-table";
 import Link from "next/link";
+import { CreditCard, Banknote, Landmark, Smartphone, FileQuestion } from "lucide-react";
 
 type PaymentHistoryRow = {
   id: string;
@@ -21,15 +22,40 @@ const methodLabels: Record<string, string> = {
   card: "Card",
   other: "Other",
 };
+const methodIcons: Record<string, any> = {
+  cash: Banknote,
+  check: FileQuestion,
+  zelle: Smartphone,
+  ach: Landmark,
+  card: CreditCard,
+  other: FileQuestion,
+};
 
 export default function PaymentHistoryTable({ rows }: { rows: PaymentHistoryRow[] }) {
   const columns: Column<PaymentHistoryRow>[] = [
-    { key: "vin", label: "VIN", render: (r) => <span className="plate">{r.vin}</span> },
-    { key: "renter", label: "Customer" },
-    { key: "amount", label: "Amount", render: (r) => `$${r.amount.toFixed(2)}`, sortValue: (r) => r.amount },
     { key: "payment_date", label: "Date" },
-    { key: "method", label: "Method", render: (r) => methodLabels[r.method] || r.method },
+    { key: "renter", label: "Customer" },
+    { key: "vin", label: "Trailer", render: (r) => <span className="plate">{r.vin.slice(-6)}</span> },
+    { key: "amount", label: "Amount", render: (r) => `$${r.amount.toFixed(2)}`, sortValue: (r) => r.amount },
+    {
+      key: "method",
+      label: "Method",
+      render: (r) => {
+        const Icon = methodIcons[r.method] || FileQuestion;
+        return (
+          <span className="flex items-center gap-1.5">
+            <Icon size={13} className="text-muted" />
+            {methodLabels[r.method] || r.method}
+          </span>
+        );
+      },
+    },
     { key: "notes", label: "Notes", render: (r) => r.notes || "—" },
+    {
+      key: "status",
+      label: "Status",
+      render: () => <span className="badge-success">Completed</span>,
+    },
     {
       key: "view",
       label: "",

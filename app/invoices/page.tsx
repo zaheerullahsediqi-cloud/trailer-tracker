@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import InvoicesTable from "./invoices-table";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 
 export default async function InvoicesPage() {
   const supabase = createClient();
@@ -23,10 +25,14 @@ export default async function InvoicesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="eyebrow">Billing</p>
-        <h1 className="page-title mt-1">Invoices</h1>
-        <p className="text-sm text-muted mt-1">All invoices, including pending deliveries and deliveries needing review.</p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="page-title text-[28px]">Invoices</h1>
+          <p className="text-sm text-muted mt-1">View and manage all trailer rental invoices.</p>
+        </div>
+        <Link href="/rentals" className="btn-primary">
+          <Plus size={16} /> Create Invoice
+        </Link>
       </div>
       <InvoicesTable rows={rows} />
     </div>
