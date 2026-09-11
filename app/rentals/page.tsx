@@ -1,27 +1,47 @@
 import { createClient } from "@/lib/supabase/server";
 import { createRental } from "./actions";
 import Link from "next/link";
+import ToggleForm from "../toggle-form";
+import RentalList from "./rental-list";
 
 export default async function RentalsPage() {
   const supabase = createClient();
   const [{ data: rentals }, { data: trailers }, { data: renters }] = await Promise.all([
     supabase
       .from("rentals")
-      .select("*, trailers(vin, make, model), renters(name)")
+      .select("*, trailers(id, vin, unit_number, make, model, trailer_type, photo_url), renters(name)")
       .order("created_at", { ascending: false }),
     supabase.from("trailers").select("id, vin, make, model").eq("status", "available").order("vin"),
     supabase.from("renters").select("id, name").order("name"),
   ]);
 
   const occupied = new Set((rentals ?? []).filter((r: any) => r.status === "active").map((r: any) => r.trailer_id));
+
+  const activeRentals = (rentals ?? [])
+    .filter((r: any) => r.status === "active")
+    .map((r: any) => ({
+      ...r,
+      trailers: r.trailers
+        ? {
+            ...r.trailers,
+            photoUrl: r.trailers.photo_url
+              ? supabase.storage.from("trailer-photos").getPublicUrl(r.trailers.photo_url).data.publicUrl
+              : null,
+          }
+        : null,
+    }));
+
   return (
     <div className="space-y-8">
-      <div>
-        <p className="eyebrow">Agreements</p>
-        <h1 className="page-title mt-1">Rentals</h1>
-        <Link href="/history?view=rentals" className="text-accent underline">View previous rentals</Link>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="page-title text-[28px]">Rentals</h1>
+          <p className="text-sm text-muted mt-1">Active rental agreements for our trailer fleet.</p>
+          <Link href="/history?view=rentals" className="text-accent underline text-sm">View previous rentals</Link>
+        </div>
       </div>
 
+      <ToggleForm label="New Rental">
       <form action={createRental} className="card p-5 grid sm:grid-cols-2 gap-4">
         <div>
           <label className="label">Trailer</label>
@@ -84,32 +104,9 @@ export default async function RentalsPage() {
           <button className="btn-primary">Create rental</button>
         </div>
       </form>
+      </ToggleForm>
 
-      <div className="space-y-2">
-        {(rentals ?? []).filter((r: any) => r.status === "active").map((r: any) => (
-          <Link
-            key={r.id}
-            href={`/rentals/${r.id}`}
-            className="card card-hover p-5 flex items-center justify-between"
-          >
-            <div>
-              <p className="plate">{r.trailers?.vin}</p>
-              <p className="text-sm font-medium text-primary mt-0.5">
-                {r.trailers?.make} {r.trailers?.model} — {r.renters?.name}
-              </p>
-            </div>
-            <div className="text-right flex flex-col items-end gap-1">
-              <span className={r.status === "active" ? "badge-success" : "badge-neutral"}>
-                {r.status}
-              </span>
-              <p className="text-xs text-muted">Next invoice {r.next_due_date}</p>
-            </div>
-          </Link>
-        ))}
-        {(!rentals || rentals.length === 0) && (
-          <p className="text-muted text-sm">No rentals yet. Create your first one above.</p>
-        )}
-      </div>
+      <RentalList rentals={activeRentals} />
     </div>
   );
 }

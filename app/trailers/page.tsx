@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { loadBillingData } from "@/lib/billing-data";
 import { addTrailer } from "./actions";
 import TrailerList from "./trailer-list";
+import ToggleForm from "../toggle-form";
 
 
 export default async function TrailersPage() {
@@ -11,7 +12,7 @@ export default async function TrailersPage() {
     supabase.from("trailers").select("*").order("created_at", { ascending: false }),
     supabase
       .from("rentals")
-      .select("id, trailer_id, rate, next_due_date, renters(name)")
+      .select("id, trailer_id, renter_id, rate, next_due_date, start_date, renters(name)")
       .eq("status", "active"),
   ]);
 
@@ -46,12 +47,17 @@ export default async function TrailersPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <p className="eyebrow">Fleet</p>
-        <h1 className="page-title mt-1">Trailers</h1>
-        <Link href="/history" className="text-accent underline">View previous trailers and rental history</Link>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="page-title text-[28px]">Trailers</h1>
+          <p className="text-sm text-muted mt-1">
+            Manage your trailer fleet, track availability and monitor rentals in real time.
+          </p>
+          <Link href="/history" className="text-accent underline text-sm">View previous trailers and rental history</Link>
+        </div>
       </div>
 
+      <ToggleForm label="Add Trailer">
       <form action={addTrailer} className="card p-5 grid sm:grid-cols-2 gap-4">
         <div>
           <label className="label">Trailer # (unit number)</label>
@@ -72,6 +78,21 @@ export default async function TrailersPage() {
         <div>
           <label className="label">Plate type (optional, for lease agreements)</label>
           <input name="plate_type" className="input" placeholder="e.g. Commercial (Non-Expiring) Trailer" />
+        </div>
+        <div>
+          <label className="label">Trailer type</label>
+          <select name="trailer_type" className="input" defaultValue="">
+            <option value="">Not set</option>
+            <option value="Dry Van">Dry Van</option>
+            <option value="Reefer">Reefer</option>
+            <option value="Flatbed">Flatbed</option>
+            <option value="Step Deck">Step Deck</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label className="label">Last service date (optional)</label>
+          <input name="last_service_date" type="date" className="input" />
         </div>
         <div>
           <label className="label">Status</label>
@@ -98,6 +119,7 @@ export default async function TrailersPage() {
           <button className="btn-primary">Add trailer</button>
         </div>
       </form>
+      </ToggleForm>
 
       <TrailerList trailers={enriched.filter((t: any) => t.status !== "sold")} />
     </div>

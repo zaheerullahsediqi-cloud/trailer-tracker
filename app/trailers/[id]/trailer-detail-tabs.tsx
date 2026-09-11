@@ -134,6 +134,21 @@ export default function TrailerDetailTabs({
               <input name="plate_type" defaultValue={trailer.plate_type ?? ""} className="input" />
             </div>
             <div>
+              <label className="label">Trailer type</label>
+              <select name="trailer_type" defaultValue={trailer.trailer_type ?? ""} className="input">
+                <option value="">Not set</option>
+                <option value="Dry Van">Dry Van</option>
+                <option value="Reefer">Reefer</option>
+                <option value="Flatbed">Flatbed</option>
+                <option value="Step Deck">Step Deck</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">Last service date</label>
+              <input name="last_service_date" type="date" defaultValue={trailer.last_service_date ?? ""} className="input" />
+            </div>
+            <div>
               <label className="label">Status</label>
               <select name="status" defaultValue={trailer.status ?? "available"} className="input">
                 <option value="available">Available</option>
@@ -177,6 +192,8 @@ export default function TrailerDetailTabs({
                 <p><span className="text-muted">Plate:</span> {trailer.plate || "—"}</p>
                 <p><span className="text-muted">Title #:</span> {trailer.title_number || "—"}</p>
                 <p><span className="text-muted">Plate type:</span> {trailer.plate_type || "—"}</p>
+                <p><span className="text-muted">Trailer type:</span> {trailer.trailer_type || "—"}</p>
+                <p><span className="text-muted">Last service:</span> {trailer.last_service_date || "—"}</p>
               </div>
             </div>
             <div className="card p-5">

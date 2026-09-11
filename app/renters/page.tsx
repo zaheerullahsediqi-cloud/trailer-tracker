@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
+import { loadBillingData } from "@/lib/billing-data";
 import { addRenter } from "./actions";
-import RenterRow from "./renter-row";
+import ToggleForm from "../toggle-form";
+import CustomerList from "./customer-list";
 
 export default async function RentersPage() {
   const supabase = createClient();
@@ -9,13 +11,27 @@ export default async function RentersPage() {
     .select("*")
     .order("created_at", { ascending: false });
 
+  const { rentals, balances } = await loadBillingData(supabase);
+
+  const enriched = (renters ?? []).map((r: any) => {
+    const theirActiveRentals = rentals.filter((rent: any) => rent.renter_id === r.id && rent.status === "active");
+    const outstandingBalance = theirActiveRentals.reduce(
+      (sum: number, rent: any) => sum + (balances.get(rent.id)?.outstanding ?? 0),
+      0
+    );
+    return { ...r, activeRentals: theirActiveRentals.length, outstandingBalance };
+  });
+
   return (
     <div className="space-y-8">
-      <div>
-        <p className="eyebrow">Contacts</p>
-        <h1 className="page-title mt-1">Customers</h1>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="page-title text-[28px]">Customers</h1>
+          <p className="text-sm text-muted mt-1">Manage your customer relationships and view rental activity at a glance.</p>
+        </div>
       </div>
 
+      <ToggleForm label="Add Customer">
       <form action={addRenter} className="card p-5 grid sm:grid-cols-2 gap-4">
         <div className="sm:col-span-2">
           <label className="label">Full name</label>
@@ -45,15 +61,9 @@ export default async function RentersPage() {
           <button className="btn-primary">Add customer</button>
         </div>
       </form>
+      </ToggleForm>
 
-      <div className="space-y-2">
-        {(renters ?? []).map((r: any) => (
-          <RenterRow key={r.id} renter={r} />
-        ))}
-        {(!renters || renters.length === 0) && (
-          <p className="text-muted text-sm">No customers yet. Add your first one above.</p>
-        )}
-      </div>
+      <CustomerList renters={enriched} />
     </div>
   );
 }
