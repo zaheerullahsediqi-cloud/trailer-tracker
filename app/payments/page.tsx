@@ -2,8 +2,7 @@ import BillingReviewNotice from "@/app/billing-review-notice";
 import { createClient } from "@/lib/supabase/server";
 import { loadBillingData } from "@/lib/billing-data";
 import { daysUntil } from "@/lib/billing";
-import ToggleForm from "../toggle-form";
-import RecordPaymentForm from "./record-payment-form";
+import RecordPaymentModal from "./record-payment-modal";
 import PaymentsTable from "./payments-table";
 import PaymentFilters from "./payment-filters";
 import { Wallet, Clock } from "lucide-react";
@@ -46,7 +45,15 @@ export default async function PaymentsPage() {
 
   const activeRentalOptions = rentals
     .filter((r: any) => r.status === "active")
-    .map((r: any) => ({ id: r.id, label: `${r.trailers?.vin ?? "Trailer"} — ${r.renters?.name ?? "Renter"}` }));
+    .map((r: any) => ({
+      id: r.id,
+      label: `${r.trailers?.vin ?? "Trailer"} — ${r.renters?.name ?? "Renter"}`,
+      vin: r.trailers?.vin ?? "—",
+      make: r.trailers?.make ?? "",
+      model: r.trailers?.model ?? "",
+      renterName: r.renters?.name ?? "—",
+      renterEmail: r.renters?.email ?? "",
+    }));
 
   return (
     <div className="space-y-6">
@@ -81,9 +88,7 @@ export default async function PaymentsPage() {
           </div>
         </div>
         <div className="lg:flex lg:items-center">
-          <ToggleForm label="Record Payment">
-            <RecordPaymentForm rentals={activeRentalOptions} />
-          </ToggleForm>
+          <RecordPaymentModal rentals={activeRentalOptions} />
         </div>
       </div>
 

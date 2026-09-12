@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { loadBillingData } from "@/lib/billing-data";
-import { addTrailer } from "./actions";
 import TrailerList from "./trailer-list";
-import ToggleForm from "../toggle-form";
+import AddTrailerModal from "./add-trailer-modal";
 
 
 export default async function TrailersPage() {
@@ -55,71 +54,10 @@ export default async function TrailersPage() {
           </p>
           <Link href="/history" className="text-accent underline text-sm">View previous trailers and rental history</Link>
         </div>
+        <AddTrailerModal />
       </div>
 
-      <ToggleForm label="Add Trailer">
-      <form action={addTrailer} className="card p-5 grid sm:grid-cols-2 gap-4">
-        <div>
-          <label className="label">Trailer # (unit number)</label>
-          <input name="unit_number" className="input" placeholder="T-102" />
-        </div>
-        <div>
-          <label className="label">VIN</label>
-          <input name="vin" required className="input plate" placeholder="1UYVS2536NA123456" />
-        </div>
-        <div>
-          <label className="label">Plate (optional)</label>
-          <input name="plate" className="input" />
-        </div>
-        <div>
-          <label className="label">Title # (optional, for lease agreements)</label>
-          <input name="title_number" className="input" />
-        </div>
-        <div>
-          <label className="label">Plate type (optional, for lease agreements)</label>
-          <input name="plate_type" className="input" placeholder="e.g. Commercial (Non-Expiring) Trailer" />
-        </div>
-        <div>
-          <label className="label">Trailer type</label>
-          <select name="trailer_type" className="input" defaultValue="">
-            <option value="">Not set</option>
-            <option value="Dry Van">Dry Van</option>
-            <option value="Reefer">Reefer</option>
-            <option value="Flatbed">Flatbed</option>
-            <option value="Step Deck">Step Deck</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-        <div>
-          <label className="label">Last service date (optional)</label>
-          <input name="last_service_date" type="date" className="input" />
-        </div>
-        <div>
-          <label className="label">Status</label>
-          <select name="status" className="input" defaultValue="available">
-            <option value="available">Available</option>
-            <option value="maintenance">Maintenance</option>
-            <option value="out_of_service">Out of service</option>
-            <option value="sold">Sold (retain records)</option>
-          </select>
-        </div>
-        <div>
-          <label className="label">Make</label>
-          <input name="make" required className="input" placeholder="Wabash" />
-        </div>
-        <div>
-          <label className="label">Model</label>
-          <input name="model" required className="input" placeholder="DuraPlate" />
-        </div>
-        <div>
-          <label className="label">Year</label>
-          <input name="year" type="number" className="input" placeholder="2022" />
-        </div>
-        <div className="sm:col-span-2">
-          <button className="btn-primary">Add trailer</button>
-        </div>
-      </form>
-      </ToggleForm>
+
 
       <TrailerList trailers={enriched.filter((t: any) => t.status !== "sold")} />
     </div>

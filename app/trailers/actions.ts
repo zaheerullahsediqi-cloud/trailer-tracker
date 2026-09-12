@@ -16,11 +16,14 @@ export async function addTrailer(formData: FormData) {
   const trailer_type = String(formData.get("trailer_type") || "").trim() || null;
   const last_service_date = String(formData.get("last_service_date") || "") || null;
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("trailers")
-    .insert({ vin, make, model, year, plate, unit_number, status, title_number, plate_type, trailer_type, last_service_date });
+    .insert({ vin, make, model, year, plate, unit_number, status, title_number, plate_type, trailer_type, last_service_date })
+    .select("id")
+    .single();
   if (error) throw new Error(error.message);
   revalidatePath("/trailers");
+  return data.id;
 }
 
 export async function updateTrailer(id: string, formData: FormData) {
