@@ -20,6 +20,11 @@ export function safeText(input: string | null | undefined): string {
   if (!input) return "";
   let out = "";
   for (const ch of input) {
+    if (ch === "\n") {
+      out += "\n";
+      continue;
+    }
+    if (ch === "\r") continue;
     const replacement = REPLACEMENTS[ch];
     if (replacement !== undefined) {
       out += replacement;
