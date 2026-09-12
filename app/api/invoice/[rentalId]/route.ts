@@ -21,7 +21,7 @@ export async function GET(
     .single();
   if (error || !rental) return new NextResponse("Not found", { status: 404 });
 
-  const { companyName, contactEmail, logoUrl } = await getCompanySettings(supabase);
+  const { companyName, contactEmail, logoUrl, invoiceFooter } = await getCompanySettings(supabase);
   const logo = await fetchLogoForPdf(logoUrl);
   const periodStart = rental.next_due_date;
   const periodEnd = nextInvoiceDate(rental);
@@ -30,6 +30,7 @@ export async function GET(
     invoiceNumber: `${rental.trailers.vin.slice(-6)}-PREVIEW`,
     companyName,
     companyEmail: contactEmail,
+    footerText: invoiceFooter,
     logoBytes: logo?.bytes,
     logoContentType: logo?.contentType,
     trailer: rental.trailers,

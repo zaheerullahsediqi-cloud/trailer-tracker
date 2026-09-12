@@ -19,7 +19,7 @@ async function loadRentalBundle(rentalId: string) {
 export async function sendInvoiceEmail(rentalId: string) {
   const rental = await loadRentalBundle(rentalId);
   const supabase = createClient();
-  const { companyName, contactEmail, logoUrl } = await getCompanySettings(supabase);
+  const { companyName, contactEmail, logoUrl, invoiceFooter } = await getCompanySettings(supabase);
   const logo = await fetchLogoForPdf(logoUrl);
 
   if (!rental.renters.email) throw new Error('Add an email address for this renter first.');
@@ -36,6 +36,7 @@ export async function sendInvoiceEmail(rentalId: string) {
     invoiceNumber,
     companyName,
     companyEmail: contactEmail,
+    footerText: invoiceFooter,
     logoBytes: logo?.bytes,
     logoContentType: logo?.contentType,
     trailer: snapshot.trailers,

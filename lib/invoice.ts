@@ -5,6 +5,7 @@ export async function generateInvoicePdf(params: {
   invoiceNumber: string;
   companyName: string;
   companyEmail?: string;
+  footerText?: string;
   logoBytes?: Uint8Array | null;
   logoContentType?: string | null;
   trailer: { vin: string; make: string; model: string; year?: number | null };
@@ -18,6 +19,7 @@ export async function generateInvoicePdf(params: {
     invoiceNumber: rawInvoiceNumber,
     companyName: rawCompanyName,
     companyEmail: rawCompanyEmail,
+    footerText: rawFooterText,
     logoBytes,
     logoContentType,
     trailer: rawTrailer,
@@ -31,6 +33,7 @@ export async function generateInvoicePdf(params: {
   const invoiceNumber = safeText(rawInvoiceNumber);
   const companyName = safeText(rawCompanyName);
   const companyEmail = rawCompanyEmail ? safeText(rawCompanyEmail) : undefined;
+  const footerText = rawFooterText ? safeText(rawFooterText) : undefined;
   const trailer = {
     vin: safeText(rawTrailer.vin),
     make: safeText(rawTrailer.make),
@@ -135,17 +138,37 @@ export async function generateInvoicePdf(params: {
   page.drawText(`$${rate.toFixed(2)}`, { x: 480, y, size: 12, font: bold, color: navy });
 
   y -= 60;
-  page.drawText("Thank you for your business. Please remit payment by the due date above.", {
-    x: 40,
-    y,
-    size: 9,
-    font,
-    color: gray,
-  });
+  const footerLines = footerText
+    ? wrapFooter(footerText, font, 9, 532)
+    : ["Thank you for your business. Please remit payment by the due date above."];
+  for (const line of footerLines) {
+    page.drawText(line, { x: 40, y, size: 9, font, color: gray });
+    y -= 12;
+  }
   if (companyEmail) {
-    y -= 14;
+    y -= 2;
     page.drawText(`Questions? ${companyEmail}`, { x: 40, y, size: 9, font, color: gray });
   }
 
   return doc.save();
+}
+
+function wrapFooter(text: string, font: any, size: number, maxWidth: number): string[] {
+  const paragraphs = text.split("\n");
+  const lines: string[] = [];
+  for (const para of paragraphs) {
+    const words = para.split(/\s+/).filter(Boolean);
+    let current = "";
+    for (const word of words) {
+      const test = current ? `${current} ${word}` : word;
+      if (font.widthOfTextAtSize(test, size) > maxWidth && current) {
+        lines.push(current);
+        current = word;
+      } else {
+        current = test;
+      }
+    }
+    lines.push(current);
+  }
+  return lines.slice(0, 6);
 }

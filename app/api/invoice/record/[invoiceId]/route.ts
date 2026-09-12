@@ -18,13 +18,14 @@ export async function GET(req: NextRequest, { params }: { params: { invoiceId: s
   if (error || !invoice) return new NextResponse("Not found", { status: 404 });
 
   const snapshot = invoice.snapshot || {};
-  const { companyName, contactEmail, logoUrl } = await getCompanySettings(supabase);
+  const { companyName, contactEmail, logoUrl, invoiceFooter } = await getCompanySettings(supabase);
   const logo = await fetchLogoForPdf(logoUrl);
 
   const pdfBytes = await generateInvoicePdf({
     invoiceNumber: invoice.invoice_number || invoice.id.slice(0, 8),
     companyName,
     companyEmail: contactEmail,
+    footerText: invoiceFooter,
     logoBytes: logo?.bytes,
     logoContentType: logo?.contentType,
     trailer: snapshot.trailers || { vin: "—", make: "", model: "" },

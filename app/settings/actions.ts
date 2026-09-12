@@ -19,21 +19,37 @@ export async function updateCompanySettings(formData: FormData) {
   const company_name = String(formData.get("company_name") || "").trim() || "Your Company";
   const contact_email = String(formData.get("contact_email") || "").trim() || null;
   const company_address = String(formData.get("company_address") || "").trim() || null;
+  const city = String(formData.get("city") || "").trim() || null;
+  const state = String(formData.get("state") || "").trim() || null;
+  const zip = String(formData.get("zip") || "").trim() || null;
+  const phone = String(formData.get("phone") || "").trim() || null;
+  const website = String(formData.get("website") || "").trim() || null;
 
   const { data: existing } = await supabase.from("company_settings").select("id").limit(1).maybeSingle();
+  const payload = { company_name, contact_email, company_address, city, state, zip, phone, website };
 
   if (existing) {
     const { error } = await supabase
       .from("company_settings")
-      .update({ company_name, contact_email, company_address, updated_at: new Date().toISOString() })
+      .update({ ...payload, updated_at: new Date().toISOString() })
       .eq("id", existing.id);
     if (error) throw new Error(error.message);
   } else {
-    const { error } = await supabase
-      .from("company_settings")
-      .insert({ company_name, contact_email, company_address });
+    const { error } = await supabase.from("company_settings").insert(payload);
     if (error) throw new Error(error.message);
   }
+  revalidatePath("/settings");
+}
+
+export async function updateInvoiceFooter(formData: FormData) {
+  const supabase = createClient();
+  const invoice_footer = String(formData.get("invoice_footer") || "").trim() || null;
+  const id = await getOrCreateSettingsId(supabase);
+  const { error } = await supabase
+    .from("company_settings")
+    .update({ invoice_footer, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
   revalidatePath("/settings");
 }
 

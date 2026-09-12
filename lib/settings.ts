@@ -5,6 +5,7 @@ export async function getCompanySettings(supabase: any) {
     contactEmail: data?.contact_email || process.env.OWNER_EMAIL || "",
     logoUrl: data?.logo_url || null,
     companyAddress: data?.company_address || "",
+    invoiceFooter: data?.invoice_footer || "",
   };
 }
 
