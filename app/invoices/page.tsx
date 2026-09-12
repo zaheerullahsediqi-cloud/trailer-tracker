@@ -19,6 +19,8 @@ export default async function InvoicesPage() {
     amount: Number(inv.amount),
     sent_to: inv.sent_to,
     sent_at: inv.sent_at,
+    created_at: inv.created_at,
+    due_date: inv.period_start,
     delivery_status: inv.delivery_status,
     rental_id: inv.rentals?.id ?? null,
   }));

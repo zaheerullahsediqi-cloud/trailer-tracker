@@ -2,7 +2,8 @@
 import { useState, useMemo } from "react";
 import DataTable, { Column } from "../data-table";
 import Link from "next/link";
-import { Eye, Download } from "lucide-react";
+import { Download } from "lucide-react";
+import ReviewInvoiceModal from "./review-invoice-modal";
 
 type InvoiceRow = {
   id: string;
@@ -13,6 +14,8 @@ type InvoiceRow = {
   amount: number;
   sent_to: string;
   sent_at: string | null;
+  created_at: string | null;
+  due_date: string;
   delivery_status: string;
   rental_id: string | null;
 };
@@ -77,9 +80,7 @@ export default function InvoicesTable({ rows }: { rows: InvoiceRow[] }) {
       label: "Actions",
       render: (r) => (
         <div className="flex items-center gap-2">
-          <a href={`/api/invoice/record/${r.id}`} target="_blank" className="btn-secondary text-xs py-1 px-2">
-            <Eye size={12} /> Preview
-          </a>
+          <ReviewInvoiceModal invoice={r} />
           <a href={`/api/invoice/record/${r.id}?download=1`} className="btn-secondary text-xs py-1 px-2">
             <Download size={12} /> Download
           </a>
