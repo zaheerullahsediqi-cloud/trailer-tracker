@@ -1,6 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
 import TrailerRow from "./trailer-row";
+import { categoryLabels, inventoryCategory, displaySoldDate, type InventoryCategory } from "@/lib/inventory";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 
 const STATUS_OPTIONS = [
@@ -9,6 +10,7 @@ const STATUS_OPTIONS = [
   { key: "available", label: "Available" },
   { key: "maintenance", label: "In Maintenance" },
   { key: "out_of_service", label: "Out of Service" },
+  { key: "sold", label: "Sold" },
 ];
 
 const SORT_OPTIONS = [
@@ -17,7 +19,8 @@ const SORT_OPTIONS = [
   { key: "last_service", label: "Last Service" },
 ];
 
-export default function TrailerList({ trailers }: { trailers: any[] }) {
+export default function TrailerList({ trailers, initialCategory = "all" }: { trailers: any[]; initialCategory?: string }) {
+  const [category, setCategory] = useState(initialCategory in categoryLabels ? initialCategory : "all");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [renterId, setRenterId] = useState("all");
@@ -40,18 +43,16 @@ export default function TrailerList({ trailers }: { trailers: any[] }) {
   }, [trailers]);
 
   const filtered = useMemo(() => {
-    let result = trailers;
+    let result = category === "all" ? trailers : trailers.filter(t => inventoryCategory(t) === category);
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
         (t) =>
-          t.vin.toLowerCase().includes(q) ||
-          t.unit_number?.toLowerCase().includes(q) ||
-          t.rental?.renters?.name?.toLowerCase().includes(q)
+          [t.vin,t.unit_number,t.plate,t.make,t.model,t.year,t.inventory_renter_name,t.buyer_name,t.rental?.renters?.name].some(value => String(value ?? "").toLowerCase().includes(q))
       );
     }
-    if (status === "rented") result = result.filter((t) => !!t.rental);
-    else if (status !== "all") result = result.filter((t) => !t.rental && t.status === status);
+    if (status === "rented") result = result.filter((t) => inventoryCategory(t) === "rented_out");
+    else if (status !== "all") result = result.filter((t) => !t.rental && t.status === status && (status !== "available" || (!t.inventory_renter_name && t.inventory_category !== "pending_insurance")));
     if (renterId !== "all") result = result.filter((t) => t.rental?.renter_id === renterId);
     if (trailerType !== "all") result = result.filter((t) => t.trailer_type === trailerType);
 
@@ -61,22 +62,29 @@ export default function TrailerList({ trailers }: { trailers: any[] }) {
     if (sortBy === "last_service")
       sorted.sort((a, b) => (b.last_service_date || "").localeCompare(a.last_service_date || ""));
     return sorted;
-  }, [trailers, search, status, renterId, trailerType, sortBy]);
+  }, [trailers, category, search, status, renterId, trailerType, sortBy]);
 
-  const hasActiveFilters = status !== "all" || renterId !== "all" || trailerType !== "all" || sortBy !== "unit";
+  const hasActiveFilters = category !== "all" || status !== "all" || renterId !== "all" || trailerType !== "all" || sortBy !== "unit";
 
   function clearFilters() {
+    setCategory("all");
+    setSearch("");
     setStatus("all");
     setRenterId("all");
     setTrailerType("all");
     setSortBy("unit");
   }
 
+  function exportInventory() {
+    const rows = trailers.map(t => ({...t, inventory_category_label: categoryLabels[inventoryCategory(t)], sold_date_display: displaySoldDate(t.sold_date)}));
+    const url = URL.createObjectURL(new Blob([JSON.stringify({exported_at:new Date().toISOString(),trailers:rows},null,2)],{type:"application/json"}));
+    const link=document.createElement("a"); link.href=url; link.download=`trailer-inventory-${new Date().toISOString().slice(0,10)}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
   const filterControls = (
     <>
       <div>
         <label className="label sm:hidden">Status</label>
-        <select value={status} onChange={(e) => setStatus(e.target.value)} className="input">
+        <select aria-label="Filter availability" value={status} onChange={(e) => setStatus(e.target.value)} className="input">
           {STATUS_OPTIONS.map((o) => (
             <option key={o.key} value={o.key}>
               {o.label}
@@ -86,7 +94,7 @@ export default function TrailerList({ trailers }: { trailers: any[] }) {
       </div>
       <div>
         <label className="label sm:hidden">Current Renter</label>
-        <select value={renterId} onChange={(e) => setRenterId(e.target.value)} className="input">
+        <select aria-label="Filter renter" value={renterId} onChange={(e) => setRenterId(e.target.value)} className="input">
           <option value="all">All Renters</option>
           {renters.map(([id, name]) => (
             <option key={id} value={id}>
@@ -97,7 +105,7 @@ export default function TrailerList({ trailers }: { trailers: any[] }) {
       </div>
       <div>
         <label className="label sm:hidden">Trailer Type</label>
-        <select value={trailerType} onChange={(e) => setTrailerType(e.target.value)} className="input">
+        <select aria-label="Filter trailer type" value={trailerType} onChange={(e) => setTrailerType(e.target.value)} className="input">
           <option value="all">All Types</option>
           {types.map((t) => (
             <option key={t} value={t}>
@@ -108,7 +116,7 @@ export default function TrailerList({ trailers }: { trailers: any[] }) {
       </div>
       <div>
         <label className="label sm:hidden">Sort By</label>
-        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="input">
+        <select aria-label="Sort inventory" value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="input">
           {SORT_OPTIONS.map((o) => (
             <option key={o.key} value={o.key}>
               {o.label}
@@ -127,10 +135,11 @@ export default function TrailerList({ trailers }: { trailers: any[] }) {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search trailers..."
+            aria-label="Search inventory" placeholder="Search VIN, plate, model, unit or name…"
             className="input pl-8"
           />
         </div>
+        <button className="btn-secondary text-sm" onClick={exportInventory}>Export inventory</button>
         <div className="hidden sm:flex gap-3">{filterControls}</div>
         {hasActiveFilters && (
           <button onClick={clearFilters} className="hidden sm:block text-sm text-accent font-medium whitespace-nowrap">
@@ -179,6 +188,10 @@ export default function TrailerList({ trailers }: { trailers: any[] }) {
         </div>
       )}
 
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {(Object.entries(categoryLabels) as [InventoryCategory,string][]).map(([key,label])=><button key={key} onClick={()=>setCategory(category===key?"all":key)} aria-pressed={category===key} className={`card p-4 text-left ${category===key?"ring-2 ring-accent":""}`}><span className="text-sm text-muted">{label}</span><span className="block text-3xl font-bold">{trailers.filter(t=>inventoryCategory(t)===key).length}</span></button>)}
+      </div>
+      <p className="text-sm text-muted" role="status">Showing {filtered.length} of {trailers.length} trailers{category!=="all"?` · ${categoryLabels[category as InventoryCategory]}`:""}</p>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map((t: any) => (
           <TrailerRow key={t.id} trailer={t} />

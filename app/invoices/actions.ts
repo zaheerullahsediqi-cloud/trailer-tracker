@@ -6,7 +6,7 @@ import { getCompanySettings, fetchLogoForPdf } from "@/lib/settings";
 import { revalidatePath } from "next/cache";
 
 export async function sendExistingInvoice(invoiceId: string, toEmail: string, message: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: invoice, error } = await supabase
     .from("invoices")
     .select("*, rentals(id, trailers(*), renters(*))")

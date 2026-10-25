@@ -11,12 +11,12 @@ function monthsBetween(start: string, end: string): number {
   return Math.max(months, 1);
 }
 
-export default async function HistoryPage({ searchParams }: { searchParams: { view?: string } }) {
-  const supabase = createClient();
+export default async function HistoryPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
+  const supabase = await createClient();
   const { trailers, rentals, payments, today } = await loadBillingData(supabase);
   const previous = rentals.filter((r) => r.status !== "active").sort((a, b) => b.start_date.localeCompare(a.start_date));
   const previousTrailers = trailers.filter((t) => t.status === "sold" || previous.some((r) => r.trailer_id === t.id));
-  const rentalView = searchParams.view === "rentals";
+  const rentalView = (await searchParams).view === "rentals";
 
   function rentalCard(r: any) {
     return (

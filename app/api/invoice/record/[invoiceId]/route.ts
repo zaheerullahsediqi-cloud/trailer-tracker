@@ -3,8 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { generateInvoicePdf } from "@/lib/invoice";
 import { getCompanySettings, fetchLogoForPdf } from "@/lib/settings";
 
-export async function GET(req: NextRequest, { params }: { params: { invoiceId: string } }) {
-  const supabase = createClient();
+export async function GET(req: NextRequest, { params }: { params: Promise<{ invoiceId: string }> }) {
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, { params }: { params: { invoiceId: s
   const { data: invoice, error } = await supabase
     .from("invoices")
     .select("*")
-    .eq("id", params.invoiceId)
+    .eq("id", (await params).invoiceId)
     .single();
   if (error || !invoice) return new NextResponse("Not found", { status: 404 });
 

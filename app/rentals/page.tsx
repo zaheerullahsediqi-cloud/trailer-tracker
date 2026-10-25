@@ -4,13 +4,13 @@ import NewRentalModal from "./new-rental-modal";
 import RentalList from "./rental-list";
 
 export default async function RentalsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const [{ data: rentals }, { data: trailers }, { data: renters }] = await Promise.all([
     supabase
       .from("rentals")
       .select("*, trailers(id, vin, unit_number, make, model, trailer_type, photo_url), renters(name)")
       .order("created_at", { ascending: false }),
-    supabase.from("trailers").select("id, vin, make, model").eq("status", "available").order("vin"),
+    supabase.from("trailers").select("id, vin, make, model, inventory_category, inventory_renter_name").eq("status", "available").eq("inventory_category", "under_mc").order("vin"),
     supabase.from("renters").select("id, name").order("name"),
   ]);
 

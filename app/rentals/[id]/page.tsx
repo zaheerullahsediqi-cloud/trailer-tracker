@@ -13,12 +13,12 @@ import DownPaymentEdit from "./down-payment-edit";
 import PaymentsLog from "./payments-log";
 import ConditionPhotos from "./condition-photos";
 
-export default async function RentalDetailPage({ params }: { params: { id: string } }) {
-  const supabase = createClient();
+export default async function RentalDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const supabase = await createClient();
   const { data: rental } = await supabase
     .from("rentals")
     .select("*, trailers(*), renters(*)")
-    .eq("id", params.id)
+    .eq("id", (await params).id)
     .single();
 
   if (!rental) notFound();

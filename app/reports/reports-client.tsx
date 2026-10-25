@@ -148,8 +148,11 @@ export default function ReportsClient({
   });
 
   const totalTrailers = trailers.filter((t: any) => t.status !== "sold").length;
-  const occupiedIds = new Set(rentals.filter((r: any) => r.status === "active").map((r: any) => r.trailer_id));
-  const availableCount = trailers.filter((t: any) => t.status === "available" && !occupiedIds.has(t.id)).length;
+  const occupiedIds = new Set([
+    ...rentals.filter((r: any) => r.status === "active").map((r: any) => r.trailer_id),
+    ...trailers.filter((t: any) => t.status !== "sold" && t.inventory_renter_name).map((t: any) => t.id),
+  ]);
+  const availableCount = trailers.filter((t: any) => t.status === "available" && t.inventory_category !== "pending_insurance" && !occupiedIds.has(t.id)).length;
 
   const topCustomers = useMemo(() => {
     const map = new Map<string, { name: string; renterId: string; collections: number; rentalIds: Set<string> }>();

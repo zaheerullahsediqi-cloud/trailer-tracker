@@ -1,13 +1,15 @@
+> Fleet inventory update: read [UPDATE-GUIDE.md](UPDATE-GUIDE.md) before deploying this version. Apply the new migration after the legacy migrations through 015.
+
 # Trailer Tracker
 
-Next.js 14 / React 18 / TypeScript, with Supabase authentication, database and private document storage, Resend email, and Vercel scheduled reminders.
+Next.js 16 / React 19 / TypeScript, with Supabase authentication, database and private document storage, Resend email, and Vercel scheduled reminders.
 
 ## Local setup
 
-1. Install Node.js and run `npm ci`.
+1. Install Node.js 22 or 24 and run `npm ci`.
 2. Copy `.env.example` to `.env.local` and provide the Supabase and email settings. Never commit secrets. Keep the service-role key server-only.
-3. For a new database, apply `supabase/schema.sql`, then the numbered migrations in ascending order (there is no migration 004).
-4. For an existing database, review and apply `supabase/migration_010.sql` after all earlier migrations. It is transactional and deliberately stops if a trailer has multiple active rentals. Resolve those records explicitly; it does not delete or pick records automatically.
+3. For a new database, apply `supabase/schema.sql`, then the numbered legacy migrations in ascending order through 015 (there is no migration 004), followed by the new migration listed in UPDATE-GUIDE.md.
+4. For an existing database, apply only missing legacy migrations through 015, then the new migration in UPDATE-GUIDE.md. Migration 010 must follow all earlier migrations. It is transactional and deliberately stops if a trailer has multiple active rentals. Resolve those records explicitly; it does not delete or pick records automatically.
 5. Run `npm run dev`.
 
 ## Verification

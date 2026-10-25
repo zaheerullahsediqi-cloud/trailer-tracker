@@ -4,7 +4,7 @@ import CustomerList from "./customer-list";
 import AddCustomerModal from "./add-customer-modal";
 
 export default async function RentersPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: renters } = await supabase
     .from("renters")
     .select("*")

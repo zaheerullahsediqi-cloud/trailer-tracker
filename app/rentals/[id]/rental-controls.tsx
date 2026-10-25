@@ -1,10 +1,8 @@
 "use client";
+import Link from "next/link";
 import { updateRentalStatus } from "../actions";
-import { deleteRental } from "./actions";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-
 export default function RentalControls({
   rentalId,
   status,
@@ -12,45 +10,48 @@ export default function RentalControls({
   rentalId: string;
   status: string;
 }) {
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(""),
+    [busy, setBusy] = useState(false);
   const router = useRouter();
-
   return (
-    <div className="flex gap-2">
+    <div className="space-y-2">
       {status === "active" ? (
         <button
           className="btn-secondary text-xs"
+          disabled={busy}
           onClick={async () => {
-            try { await updateRentalStatus(rentalId, "completed"); router.refresh(); } catch(e: any) { setError(e.message); }
+            setBusy(true);
+            setError("");
+            try {
+              await updateRentalStatus(rentalId, "completed");
+              router.refresh();
+            } catch (e) {
+              setError(
+                e instanceof Error ? e.message : "Could not complete rental.",
+              );
+            } finally {
+              setBusy(false);
+            }
           }}
         >
-          Mark completed
+          {busy ? "Saving…" : "Mark completed"}
         </button>
       ) : (
-        <button
-          className="btn-secondary text-xs"
-          onClick={async () => {
-            try { await updateRentalStatus(rentalId, "active"); router.refresh(); } catch(e: any) { setError(e.message); }
-          }}
-        >
-          Reactivate
-        </button>
+        <>
+          <p className="text-sm text-muted">
+            Completed rental history is preserved. Start a new agreement if the
+            trailer returns to service.
+          </p>
+          <Link className="btn-secondary text-xs" href="/rentals">
+            New rental agreement
+          </Link>
+        </>
       )}
-      <button
-        className="btn-danger text-xs"
-        onClick={async () => {
-          if (!confirm("Permanently delete this rental? This erases it completely — no record kept in History, and all its invoices, payments, and photos are deleted with it. This cannot be undone.\n\nOnly use this for a rental created by mistake. For a normal rental that's ending (trailer returned or sold), click Cancel and use \"Mark completed\" instead — that keeps the record in your history.")) return;
-          try {
-            await deleteRental(rentalId);
-            router.push("/rentals");
-          } catch (e: any) {
-            setError(e.message);
-          }
-        }}
-      >
-        Delete
-      </button>
-      {error && <p className="text-danger text-sm">{error}</p>}
+      {error && (
+        <p role="alert" className="text-danger">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

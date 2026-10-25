@@ -6,7 +6,7 @@ import { getCompanySettings, fetchLogoForPdf } from "@/lib/settings";
 import { revalidatePath } from "next/cache";
 
 async function loadRentalBundle(rentalId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: rental, error } = await supabase
     .from("rentals")
     .select("*, trailers(*), renters(*)")
@@ -18,7 +18,7 @@ async function loadRentalBundle(rentalId: string) {
 
 export async function sendInvoiceEmail(rentalId: string) {
   const rental = await loadRentalBundle(rentalId);
-  const supabase = createClient();
+  const supabase = await createClient();
   const { companyName, contactEmail, logoUrl, invoiceFooter } = await getCompanySettings(supabase);
   const logo = await fetchLogoForPdf(logoUrl);
 
@@ -84,17 +84,8 @@ export async function sendInvoiceEmail(rentalId: string) {
   revalidatePath("/", "layout");
 }
 
-export async function deleteRental(rentalId: string) {
-  const supabase = createClient();
-  const { error } = await supabase.from("rentals").delete().eq("id", rentalId);
-  if (error) throw new Error(error.message);
-  revalidatePath("/rentals");
-  revalidatePath("/history");
-  revalidatePath("/", "layout");
-}
-
 export async function recordPayment(rentalId: string, formData: FormData) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const amount = Number(formData.get("amount") || 0);
   const payment_date = String(formData.get("payment_date") || new Date().toISOString().slice(0, 10));
   const method = String(formData.get("method") || "other");
@@ -119,7 +110,7 @@ export async function recordPayment(rentalId: string, formData: FormData) {
 }
 
 export async function deletePayment(id: string, rentalId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from("payments").delete().eq("id", id).eq("rental_id", rentalId);
   if (error) throw new Error(error.message);
   revalidatePath(`/rentals/${rentalId}`);
@@ -134,7 +125,7 @@ export async function recordConditionPhoto(
   photoPath: string,
   caption?: string
 ) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from("condition_photos").insert({
     rental_id: rentalId,
     stage,
@@ -146,7 +137,7 @@ export async function recordConditionPhoto(
 }
 
 export async function deleteConditionPhoto(id: string, photoPath: string, rentalId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   await supabase.storage.from("condition-photos").remove([photoPath]);
   const { error } = await supabase.from("condition_photos").delete().eq("id", id);
   if (error) throw new Error(error.message);

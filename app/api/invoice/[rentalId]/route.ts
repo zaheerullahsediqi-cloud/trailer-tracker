@@ -6,9 +6,9 @@ import { nextInvoiceDate } from "@/lib/billing";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { rentalId: string } }
+  { params }: { params: Promise<{ rentalId: string }> }
 ) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -17,7 +17,7 @@ export async function GET(
   const { data: rental, error } = await supabase
     .from("rentals")
     .select("*, trailers(*), renters(*)")
-    .eq("id", params.rentalId)
+    .eq("id", (await params).rentalId)
     .single();
   if (error || !rental) return new NextResponse("Not found", { status: 404 });
 

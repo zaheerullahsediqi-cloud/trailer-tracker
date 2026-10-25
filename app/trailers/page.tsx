@@ -5,17 +5,10 @@ import TrailerList from "./trailer-list";
 import AddTrailerModal from "./add-trailer-modal";
 
 
-export default async function TrailersPage() {
-  const supabase = createClient();
-  const [{ data: trailers }, { data: activeRentals }] = await Promise.all([
-    supabase.from("trailers").select("*").order("created_at", { ascending: false }),
-    supabase
-      .from("rentals")
-      .select("id, trailer_id, renter_id, rate, next_due_date, start_date, renters(name)")
-      .eq("status", "active"),
-  ]);
-
-  const { balances } = await loadBillingData(supabase);
+export default async function TrailersPage({searchParams}:{searchParams:Promise<{category?:string}>}) {
+  const supabase = await createClient();
+  const { trailers, rentals, balances } = await loadBillingData(supabase);
+  const activeRentals = rentals.filter((r: any) => r.status === "active");
   const rentalByTrailer = new Map<string, any>();
   (activeRentals ?? []).forEach((r: any) => rentalByTrailer.set(r.trailer_id, r));
 
@@ -54,12 +47,12 @@ export default async function TrailersPage() {
           </p>
           <Link href="/history" className="text-accent underline text-sm">View previous trailers and rental history</Link>
         </div>
-        <AddTrailerModal />
+        <div className="flex gap-2"><Link href="/trailers/import" className="btn-secondary">Review original inventory</Link><AddTrailerModal /></div>
       </div>
 
 
 
-      <TrailerList trailers={enriched.filter((t: any) => t.status !== "sold")} />
+      <TrailerList trailers={enriched} initialCategory={(await searchParams).category} />
     </div>
   );
 }

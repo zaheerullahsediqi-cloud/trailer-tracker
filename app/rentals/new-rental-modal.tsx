@@ -6,7 +6,7 @@ import { createRental } from "./actions";
 import Modal from "../modal";
 import { Truck, Plus } from "lucide-react";
 
-type TrailerOption = { id: string; vin: string; make: string; model: string };
+type TrailerOption = { id: string; vin: string; make: string; model: string; inventory_renter_name?: string | null };
 type RenterOption = { id: string; name: string };
 
 const periodLabels: Record<string, string> = {
@@ -55,7 +55,7 @@ export default function NewRentalModal({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!formRef.current) return;
+    if (!formRef.current || !formRef.current.reportValidity()) return;
     setSaving(true);
     setError(null);
     try {
@@ -105,6 +105,7 @@ export default function NewRentalModal({
         {error && <p className="text-sm text-danger mb-3">{error}</p>}
         <div className="grid lg:grid-cols-3 gap-6">
           <form ref={formRef} className="lg:col-span-2 space-y-4">
+            {selectedTrailer?.inventory_renter_name && <div className="card p-3 space-y-2"><p>Imported assignment: <strong>{selectedTrailer.inventory_renter_name}</strong>. Select this renter and enter the actual start date and agreed rate.</p><label className="text-sm"><input type="checkbox" name="confirm_inventory_setup" required /> I have checked these rental terms against our records.</label></div>}
             <div>
               <label className="label">Available trailer *</label>
               <select

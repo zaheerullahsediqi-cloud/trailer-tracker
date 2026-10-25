@@ -1,8 +1,9 @@
 "use client";
+import { availabilityLabel, categoryLabels, inventoryCategory, displaySoldDate } from "@/lib/inventory";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { updateTrailer, deleteTrailer } from "../actions";
+import { updateTrailer, deleteTrailer, clearPendingInsurance } from "../actions";
 import TrailerPhotoUpload from "../trailer-photo-upload";
 import TrailerDocuments from "../trailer-documents";
 import {
@@ -57,6 +58,7 @@ export default function TrailerDetailTabs({
   const [tab, setTab] = useState("overview");
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const activeRental = rentals.find((r) => r.status === "active");
@@ -67,10 +69,13 @@ export default function TrailerDetailTabs({
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <span className={activeRental ? "badge-accent" : statusBadge[trailer.status] || "badge-neutral"}>
-            {activeRental ? "Rented" : statusLabel[trailer.status] || trailer.status}
+            {availabilityLabel({...trailer, rental: activeRental})}
           </span>
           <h1 className="page-title mt-2">{trailer.unit_number || trailer.vin}</h1>
           <p className="plate mt-0.5">{trailer.vin}</p>
+          <p className="text-sm text-muted">{categoryLabels[inventoryCategory({...trailer,rental:activeRental})]}</p>
+          {trailer.inventory_category === "pending_insurance" && <button className="btn-secondary text-sm mt-2" disabled={saving} onClick={async()=>{setSaving(true);setError(null);try{await clearPendingInsurance(trailer.id);router.refresh()}catch(e){setError(e instanceof Error?e.message:"Could not clear insurance.")}finally{setSaving(false)}}}>Insurance cleared — move to Under Our MC</button>}
+          {error && <p role="alert" className="text-danger">{error}</p>}
         </div>
         <Link href="/trailers" className="btn-secondary text-sm">
           ← All trailers
@@ -106,10 +111,10 @@ export default function TrailerDetailTabs({
           <form
             action={async (formData) => {
               setSaving(true);
-              await updateTrailer(trailer.id, formData);
-              setSaving(false);
-              setEditing(false);
-              router.refresh();
+              setError(null);
+              try { await updateTrailer(trailer.id, formData); setEditing(false); router.refresh(); }
+              catch (e) { setError(e instanceof Error ? e.message : "Could not save trailer."); }
+              finally { setSaving(false); }
             }}
             className="card p-5 grid sm:grid-cols-2 gap-3"
           >
@@ -147,6 +152,19 @@ export default function TrailerDetailTabs({
             <div>
               <label className="label">Last service date</label>
               <input name="last_service_date" type="date" defaultValue={trailer.last_service_date ?? ""} className="input" />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="label" htmlFor="inventory-assignment">Renter assignment awaiting setup</label>
+              <input id="inventory-assignment" name="inventory_renter_name" defaultValue={trailer.inventory_renter_name ?? ""} className="input" disabled={!!activeRental} />
+              <p className="text-xs text-muted">An assignment creates no billing. Clear it when the trailer is returned, or create a rental with actual terms. Active agreements are managed on the rental page.</p>
+            </div>
+            <div>
+              <label className="label" htmlFor="inventory-category">Inventory category</label>
+              <select id="inventory-category" name="inventory_category" className="input" defaultValue={trailer.inventory_category || "under_mc"}>
+                <option value="under_mc">Under Our MC</option>
+                <option value="pending_insurance">Pending Insurance</option>
+              </select>
+              <p className="text-xs text-muted">Rented Out follows rental assignments. Mark availability as Sold to retain a sale.</p>
             </div>
             <div>
               <label className="label">Status</label>
@@ -227,7 +245,7 @@ export default function TrailerDetailTabs({
                 {trailer.status === "sold" && (
                   <div className="pt-2 mt-2 border-t border-border dark:border-slate-800">
                     <p className="eyebrow mb-1">Sold record</p>
-                    {trailer.sold_date && <p><span className="text-muted">Sold:</span> {trailer.sold_date}</p>}
+                    {trailer.sold_date && <p><span className="text-muted">Sold:</span> {displaySoldDate(trailer.sold_date)}</p>}
                     {trailer.buyer_name && <p><span className="text-muted">Buyer:</span> {trailer.buyer_name}</p>}
                     {trailer.sold_price && <p><span className="text-muted">Price:</span> ${Number(trailer.sold_price).toLocaleString()}</p>}
                     {trailer.sold_note && <p className="text-muted italic mt-1">{trailer.sold_note}</p>}
@@ -247,7 +265,9 @@ export default function TrailerDetailTabs({
                   </Link>
                 </div>
               ) : (
-                <p className="text-sm text-muted">No active rental.</p>
+                <div className="space-y-2"><p className="text-sm text-muted">{availabilityLabel(trailer)}</p>
+                  {trailer.inventory_renter_name && <><p>Assigned renter: {trailer.inventory_renter_name}</p><p className="text-sm text-muted">Enter the real start date and agreed rate to complete rental setup. No billing has been created.</p><Link href="/rentals" className="text-accent">Set up rental →</Link></>}
+                </div>
               )}
             </div>
             <div className="sm:col-span-2">

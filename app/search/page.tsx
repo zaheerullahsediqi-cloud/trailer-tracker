@@ -5,10 +5,10 @@ import { Truck, Users, FileText } from "lucide-react";
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: { q?: string };
+  searchParams: Promise<{ q?: string }>;
 }) {
-  const q = (searchParams.q || "").trim();
-  const supabase = createClient();
+  const q = ((await searchParams).q || "").trim();
+  const supabase = await createClient();
 
   let trailers: any[] = [];
   let renters: any[] = [];

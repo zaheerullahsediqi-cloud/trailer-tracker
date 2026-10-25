@@ -42,9 +42,14 @@ export default function TrailerPhotoUpload({
       setUploading(false);
       return;
     }
-    await uploadTrailerPhoto(trailerId, path);
-    setUploading(false);
-    router.refresh();
+    try {
+      await uploadTrailerPhoto(trailerId, path);
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not save photo.");
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (
@@ -62,8 +67,12 @@ export default function TrailerPhotoUpload({
                 className="btn-danger text-xs"
                 onClick={async () => {
                   if (confirm("Remove this trailer photo?")) {
-                    await deleteTrailerPhoto(trailerId, photoPath);
-                    router.refresh();
+                    try {
+                      await deleteTrailerPhoto(trailerId, photoPath);
+                      router.refresh();
+                    } catch (e) {
+                      setError(e instanceof Error ? e.message : "Could not remove photo.");
+                    }
                   }
                 }}
               >

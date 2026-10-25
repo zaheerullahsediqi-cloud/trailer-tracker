@@ -8,27 +8,27 @@ import LicenseUpload from "./license-upload";
 import { FileText, Receipt, Clock, Wallet, Contact } from "lucide-react";
 
 
-export default async function CustomerProfilePage({ params }: { params: { id: string } }) {
-  const supabase = createClient();
-  const { data: renter } = await supabase.from("renters").select("*").eq("id", params.id).single();
+export default async function CustomerProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const supabase = await createClient();
+  const { data: renter } = await supabase.from("renters").select("*").eq("id", (await params).id).single();
   if (!renter) notFound();
 
   const { data: rentals } = await supabase
     .from("rentals")
     .select("*, trailers(vin, make, model)")
-    .eq("renter_id", params.id)
+    .eq("renter_id", (await params).id)
     .order("created_at", { ascending: false });
 
   const { data: invoices } = await supabase
     .from("invoices")
     .select("*, rentals!inner(renter_id, trailers(vin))")
-    .eq("rentals.renter_id", params.id)
+    .eq("rentals.renter_id", (await params).id)
     .order("sent_at", { ascending: false });
 
   const { data: payments } = await supabase
     .from("payments")
     .select("*, rentals!inner(renter_id, trailers(vin))")
-    .eq("rentals.renter_id", params.id)
+    .eq("rentals.renter_id", (await params).id)
     .order("payment_date", { ascending: false });
 
   let licenseUrl: string | null = null;

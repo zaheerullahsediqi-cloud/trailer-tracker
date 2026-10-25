@@ -2,15 +2,15 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import TrailerDetailTabs from "./trailer-detail-tabs";
 
-export default async function TrailerDetailPage({ params }: { params: { id: string } }) {
-  const supabase = createClient();
-  const { data: trailer } = await supabase.from("trailers").select("*").eq("id", params.id).single();
+export default async function TrailerDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const supabase = await createClient();
+  const { data: trailer } = await supabase.from("trailers").select("*").eq("id", (await params).id).single();
   if (!trailer) notFound();
 
   const { data: allRentals } = await supabase
     .from("rentals")
     .select("*, renters(name, email, phone)")
-    .eq("trailer_id", params.id)
+    .eq("trailer_id", (await params).id)
     .order("start_date", { ascending: false });
 
   const rentalIds = (allRentals ?? []).map((r: any) => r.id);

@@ -7,7 +7,7 @@ import MarkAllButton from "./mark-all-button";
 import { AlertTriangle, CalendarClock, FileWarning } from "lucide-react";
 
 export default async function NotificationsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const current = await syncNotifications(supabase);
 
   const { data: notifications } = await supabase

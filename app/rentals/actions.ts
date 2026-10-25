@@ -13,7 +13,7 @@ function periodToDays(period: string, customDays?: number) {
 }
 
 export async function createRental(formData: FormData) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const trailer_id = String(formData.get("trailer_id"));
   const renter_id = String(formData.get("renter_id"));
   const start_date = String(formData.get("start_date"));
@@ -27,6 +27,9 @@ export async function createRental(formData: FormData) {
   const period_days = periodToDays(period, customDays);
   const next_due_date = advanceByPeriod(start_date, period, period_days);
 
+  const { data: assigned, error: assignmentError } = await supabase.from("trailers").select("inventory_renter_name").eq("id", trailer_id).single();
+  if (assignmentError) throw new Error(assignmentError.message);
+  if (assigned.inventory_renter_name && formData.get("confirm_inventory_setup") !== "on") throw new Error("Confirm the original assignment and actual billing terms before starting this rental.");
   const { error } = await supabase.from("rentals").insert({
     trailer_id,
     renter_id,
@@ -46,7 +49,7 @@ export async function createRental(formData: FormData) {
 }
 
 export async function updateSecurityDeposit(id: string, formData: FormData) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const security_deposit_amount = Number(formData.get("security_deposit_amount") || 0);
   const security_deposit_status = String(formData.get("security_deposit_status"));
   const security_deposit_returned_amount = Number(formData.get("security_deposit_returned_amount") || 0);
@@ -67,7 +70,7 @@ export async function updateSecurityDeposit(id: string, formData: FormData) {
 }
 
 export async function updateDownPayment(id: string, formData: FormData) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const down_payment_amount = Number(formData.get("down_payment_amount") || 0);
   const down_payment_status = String(formData.get("down_payment_status"));
   const down_payment_collected_amount = Number(formData.get("down_payment_collected_amount") || 0);
@@ -88,7 +91,7 @@ export async function updateDownPayment(id: string, formData: FormData) {
 }
 
 export async function updateRentalTerms(id: string, formData: FormData) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const start_date = String(formData.get("start_date"));
   const period = String(formData.get("period"));
   const customDays = Number(formData.get("custom_days") || 0);
@@ -111,15 +114,16 @@ export async function updateRentalTerms(id: string, formData: FormData) {
 }
 
 export async function updateRentalStatus(id: string, status: string) {
-  const supabase = createClient();
-  const { error } = await supabase.from("rentals").update({ status }).eq("id", id);
+  if (status !== "completed") throw new Error("Start a new agreement to resume service; completed history cannot be reactivated.");
+  const supabase = await createClient();
+  const { error } = await supabase.from("rentals").update({ status }).eq("id", id).select("id").single();
   if (error) throw new Error(error.message);
   revalidatePath("/", "layout");
   revalidatePath(`/rentals/${id}`);
 }
 
 export async function advanceDueDate(id: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: rental } = await supabase.from("rentals").select("*").eq("id", id).single();
   if (!rental) throw new Error("Rental not found");
   const next_due_date = nextInvoiceDate(rental);
@@ -131,7 +135,7 @@ export async function advanceDueDate(id: string) {
 }
 
 export async function uploadContract(rentalId: string, filePath: string, filename: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase
     .from("rentals")
     .update({ contract_url: filePath, contract_filename: filename })

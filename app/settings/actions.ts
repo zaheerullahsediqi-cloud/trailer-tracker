@@ -15,7 +15,7 @@ async function getOrCreateSettingsId(supabase: any) {
 }
 
 export async function updateCompanySettings(formData: FormData) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const company_name = String(formData.get("company_name") || "").trim() || "Your Company";
   const contact_email = String(formData.get("contact_email") || "").trim() || null;
   const company_address = String(formData.get("company_address") || "").trim() || null;
@@ -42,7 +42,7 @@ export async function updateCompanySettings(formData: FormData) {
 }
 
 export async function updateInvoiceFooter(formData: FormData) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const invoice_footer = String(formData.get("invoice_footer") || "").trim() || null;
   const id = await getOrCreateSettingsId(supabase);
   const { error } = await supabase
@@ -54,7 +54,7 @@ export async function updateInvoiceFooter(formData: FormData) {
 }
 
 export async function updateCompanyLogo(logoUrl: string | null) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const id = await getOrCreateSettingsId(supabase);
   const { error } = await supabase
     .from("company_settings")

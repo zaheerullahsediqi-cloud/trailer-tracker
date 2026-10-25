@@ -8,7 +8,7 @@ import PaymentFilters from "./payment-filters";
 import { Wallet, Clock } from "lucide-react";
 
 export default async function PaymentsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { rentals, payments: paymentRows, balances, today } = await loadBillingData(supabase);
   const rows = rentals.filter((r) => r.status === "active" && balances.get(r.id)!.nextUnpaid).map((r: any) => {
     const balance = balances.get(r.id)!;

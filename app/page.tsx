@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { loadBillingData } from "@/lib/billing-data";
 import { daysUntil } from "@/lib/billing";
+import { availabilityLabel, categoryLabels, inventoryCategory } from "@/lib/inventory";
 import Link from "next/link";
 import RevenueChart from "./revenue-chart";
 import {
@@ -16,7 +17,7 @@ import {
 } from "lucide-react";
 
 export default async function Dashboard() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { rentals, trailers, payments, balances, today } = await loadBillingData(supabase);
   const list = rentals.filter((r: any) => r.status === "active");
@@ -146,6 +147,9 @@ export default async function Dashboard() {
         })}
       </div>
 
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {Object.entries(categoryLabels).map(([key,label])=><Link key={key} href={`/trailers?category=${key}`} className="card card-hover p-4"><p className="text-sm text-muted">{label}</p><p className="text-3xl font-bold">{trailers.filter((t:any)=>inventoryCategory({...t,rental:rentalByTrailer.get(t.id)})===key).length}</p></Link>)}
+      </div>
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
@@ -174,7 +178,7 @@ export default async function Dashboard() {
                       {t.unit_number || t.vin.slice(-6)}
                     </p>
                     <span className={t.rental ? "badge-success" : "badge-neutral"}>
-                      {t.rental ? "Rented" : "Available"}
+                      {availabilityLabel(t)}
                     </span>
                   </div>
                   {t.rental ? (

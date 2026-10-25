@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 
 export default async function InvoicesPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: invoices } = await supabase
     .from("invoices")
     .select("*, rentals(id, trailers(vin), renters(name))")

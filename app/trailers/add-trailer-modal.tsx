@@ -32,7 +32,7 @@ export default function AddTrailerModal() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!formRef.current) return;
+    if (!formRef.current || !formRef.current.reportValidity()) return;
     setSaving(true);
     setError(null);
     try {
@@ -107,6 +107,14 @@ export default function AddTrailerModal() {
               <label className="label">Unit number *</label>
               <input name="unit_number" required className="input" placeholder="TL-1025" />
               <p className="text-xs text-muted mt-1">Unique identifier for this trailer</p>
+            </div>
+            <div>
+              <label className="label" htmlFor="inventory-category">Inventory category</label>
+              <select id="inventory-category" name="inventory_category" className="input" defaultValue={"under_mc"}>
+                <option value="under_mc">Under Our MC</option>
+                <option value="pending_insurance">Pending Insurance</option>
+              </select>
+              <p className="text-xs text-muted">Rented Out follows rental assignments. Mark availability as Sold to retain a sale.</p>
             </div>
             <div>
               <label className="label">Status *</label>

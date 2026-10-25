@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function addRenter(formData: FormData) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const name = String(formData.get("name")).trim();
   const streetAddress = String(formData.get("address") || "").trim();
   const city = String(formData.get("city") || "").trim();
@@ -30,7 +30,7 @@ export async function addRenter(formData: FormData) {
 }
 
 export async function updateRenter(id: string, formData: FormData) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const name = String(formData.get("name")).trim();
   const address = String(formData.get("address") || "").trim() || null;
   const phone = String(formData.get("phone") || "").trim() || null;
@@ -48,14 +48,14 @@ export async function updateRenter(id: string, formData: FormData) {
 }
 
 export async function updateRenterNotes(id: string, notes: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from("renters").update({ notes }).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath(`/renters/${id}`);
 }
 
 export async function deleteRenter(id: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { count, error: checkError } = await supabase.from("rentals").select("id", {count:"exact",head:true}).eq("renter_id",id);
   if (checkError) throw new Error(checkError.message);
   if (count) throw new Error("This record has rental history and cannot be deleted.");
@@ -65,7 +65,7 @@ export async function deleteRenter(id: string) {
 }
 
 export async function uploadRenterLicense(renterId: string, path: string, filename: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase
     .from("renters")
     .update({ license_document_url: path, license_document_filename: filename })
@@ -76,7 +76,7 @@ export async function uploadRenterLicense(renterId: string, path: string, filena
 }
 
 export async function deleteRenterLicense(renterId: string, path: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   await supabase.storage.from("documents").remove([path]);
   const { error } = await supabase
     .from("renters")

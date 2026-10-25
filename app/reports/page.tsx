@@ -3,7 +3,7 @@ import { loadBillingData } from "@/lib/billing-data";
 import ReportsClient from "./reports-client";
 
 export default async function ReportsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { trailers, rentals, payments, balances } = await loadBillingData(supabase);
 
   const overdueTotal = [...balances.values()].reduce((n, b) => n + b.outstanding, 0);

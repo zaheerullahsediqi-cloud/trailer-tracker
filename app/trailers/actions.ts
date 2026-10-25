@@ -2,8 +2,20 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+export async function clearPendingInsurance(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("trailers")
+    .update({ inventory_category: "under_mc" })
+    .eq("id", id).eq("inventory_category", "pending_insurance").select("id").single();
+  if (error) throw new Error(error.message);
+  revalidatePath("/", "layout");
+}
+
 export async function addTrailer(formData: FormData) {
-  const supabase = createClient();
+  const supabase = await createClient();
+  const inventory_category = String(formData.get("inventory_category") || "under_mc");
+  if (!["under_mc", "pending_insurance"].includes(inventory_category)) throw new Error("Choose a valid inventory category.");
+  for (const key of ["vin", "make", "model"]) if (!String(formData.get(key) || "").trim()) throw new Error("VIN, make and model are required.");
   const vin = String(formData.get("vin")).trim().toUpperCase();
   const make = String(formData.get("make")).trim();
   const model = String(formData.get("model")).trim();
@@ -18,16 +30,20 @@ export async function addTrailer(formData: FormData) {
 
   const { data, error } = await supabase
     .from("trailers")
-    .insert({ vin, make, model, year, plate, unit_number, status, title_number, plate_type, trailer_type, last_service_date })
+    .insert({ vin, make, model, year, plate, unit_number, status, inventory_category, title_number, plate_type, trailer_type, last_service_date })
     .select("id")
     .single();
   if (error) throw new Error(error.message);
+  revalidatePath("/", "layout");
   revalidatePath("/trailers");
   return data.id;
 }
 
 export async function updateTrailer(id: string, formData: FormData) {
-  const supabase = createClient();
+  const supabase = await createClient();
+  const inventory_category = String(formData.get("inventory_category") || "under_mc");
+  if (!["under_mc", "pending_insurance"].includes(inventory_category)) throw new Error("Choose a valid inventory category.");
+  for (const key of ["vin", "make", "model"]) if (!String(formData.get(key) || "").trim()) throw new Error("VIN, make and model are required.");
   const vin = String(formData.get("vin")).trim().toUpperCase();
   const make = String(formData.get("make")).trim();
   const model = String(formData.get("model")).trim();
@@ -45,43 +61,49 @@ export async function updateTrailer(id: string, formData: FormData) {
   const sold_price = formData.get("sold_price") ? Number(formData.get("sold_price")) : null;
   const buyer_name = String(formData.get("buyer_name") || "").trim() || null;
   const sold_note = String(formData.get("sold_note") || "").trim() || null;
+  const inventory_renter_name = String(formData.get("inventory_renter_name") || "").trim() || null;
 
   const { error } = await supabase
     .from("trailers")
     .update({
-      vin, make, model, year, plate, unit_number, status, title_number, plate_type, trailer_type, last_service_date,
-      length_ft, capacity_lbs, sold_date, sold_price, buyer_name, sold_note,
+      vin, make, model, year, plate, unit_number, status, inventory_category, title_number, plate_type, trailer_type, last_service_date,
+      length_ft, capacity_lbs, sold_date, sold_price, buyer_name, sold_note, inventory_renter_name,
     })
-    .eq("id", id);
+    .eq("id", id).select("id").single();
   if (error) throw new Error(error.message);
+  revalidatePath("/", "layout");
   revalidatePath("/trailers");
   revalidatePath(`/trailers/${id}`);
 }
 
 export async function deleteTrailer(id: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { count, error: checkError } = await supabase.from("rentals").select("id", {count:"exact",head:true}).eq("trailer_id",id);
   if (checkError) throw new Error(checkError.message);
   if (count) throw new Error("This record has rental history and cannot be deleted.");
   const { error } = await supabase.from("trailers").delete().eq("id", id);
   if (error) throw new Error(error.message);
+  revalidatePath("/", "layout");
   revalidatePath("/trailers");
 }
 
 export async function uploadTrailerPhoto(trailerId: string, path: string) {
-  const supabase = createClient();
-  const { error } = await supabase.from("trailers").update({ photo_url: path }).eq("id", trailerId);
+  const supabase = await createClient();
+  const { error } = await supabase.from("trailers").update({ photo_url: path }).eq("id", trailerId).select("id").single();
   if (error) throw new Error(error.message);
+  revalidatePath("/", "layout");
   revalidatePath("/trailers");
   revalidatePath(`/trailers/${trailerId}`);
   revalidatePath("/");
 }
 
 export async function deleteTrailerPhoto(trailerId: string, path: string) {
-  const supabase = createClient();
-  await supabase.storage.from("trailer-photos").remove([path]);
-  const { error } = await supabase.from("trailers").update({ photo_url: null }).eq("id", trailerId);
+  const supabase = await createClient();
+  const { error: removeError } = await supabase.storage.from("trailer-photos").remove([path]);
+  if (removeError) throw new Error(removeError.message);
+  const { error } = await supabase.from("trailers").update({ photo_url: null }).eq("id", trailerId).select("id").single();
   if (error) throw new Error(error.message);
+  revalidatePath("/", "layout");
   revalidatePath("/trailers");
   revalidatePath(`/trailers/${trailerId}`);
   revalidatePath("/");
@@ -93,13 +115,14 @@ export async function uploadTrailerDocument(
   path: string,
   filename: string
 ) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const update =
     docType === "registration"
       ? { registration_url: path, registration_filename: filename }
       : { insurance_url: path, insurance_filename: filename };
   const { error } = await supabase.from("trailers").update(update).eq("id", trailerId);
   if (error) throw new Error(error.message);
+  revalidatePath("/", "layout");
   revalidatePath("/trailers");
   revalidatePath(`/trailers/${trailerId}`);
 }
@@ -109,7 +132,7 @@ export async function deleteTrailerDocument(
   docType: "registration" | "insurance",
   path: string
 ) {
-  const supabase = createClient();
+  const supabase = await createClient();
   await supabase.storage.from("documents").remove([path]);
   const update =
     docType === "registration"
@@ -117,6 +140,7 @@ export async function deleteTrailerDocument(
       : { insurance_url: null, insurance_filename: null };
   const { error } = await supabase.from("trailers").update(update).eq("id", trailerId);
   if (error) throw new Error(error.message);
+  revalidatePath("/", "layout");
   revalidatePath("/trailers");
   revalidatePath(`/trailers/${trailerId}`);
 }

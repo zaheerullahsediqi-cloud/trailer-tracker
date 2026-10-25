@@ -1,3 +1,4 @@
+import { availabilityLabel, categoryLabels, inventoryCategory, displaySoldDate } from "@/lib/inventory";
 import Link from "next/link";
 import { Truck, ArrowRight } from "lucide-react";
 
@@ -18,7 +19,7 @@ export default function TrailerRow({ trailer }: { trailer: any }) {
   const rental = trailer.rental;
   const isRented = !!rental;
   const displayStatusBadge = isRented ? "badge-success" : statusBadge[trailer.status] || "badge-neutral";
-  const displayStatusLabel = isRented ? "In Rental" : statusLabel[trailer.status] || trailer.status;
+  const displayStatusLabel = availabilityLabel(trailer);
 
   return (
     <div className="card card-hover overflow-hidden">
@@ -34,6 +35,10 @@ export default function TrailerRow({ trailer }: { trailer: any }) {
       </div>
       <div className="p-4 space-y-2.5">
         <p className="text-lg font-bold text-primary dark:text-white">{trailer.unit_number || "Unassigned #"}</p>
+        <p className="text-xs text-accent">{categoryLabels[inventoryCategory(trailer)]}</p>
+        <p className="text-sm">{trailer.year} {trailer.make} {trailer.model}</p>
+        <p className="text-sm">Plate: {trailer.plate || "—"}</p>
+        {trailer.status === "sold" && <p className="text-sm">Buyer: {trailer.buyer_name || "—"} · {displaySoldDate(trailer.sold_date)}</p>}
         <div className="text-sm space-y-1">
           <div className="flex justify-between gap-2">
             <span className="text-muted">VIN</span>
@@ -41,7 +46,7 @@ export default function TrailerRow({ trailer }: { trailer: any }) {
           </div>
           <div className="flex justify-between gap-2">
             <span className="text-muted">Current Renter</span>
-            <span className="text-primary dark:text-slate-200 truncate">{rental?.renters?.name || "—"}</span>
+            <span className="text-primary dark:text-slate-200 truncate">{rental?.renters?.name || trailer.inventory_renter_name || "—"}</span>
           </div>
           <div className="flex justify-between gap-2">
             <span className="text-muted">Trailer Type</span>

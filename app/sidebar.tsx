@@ -8,7 +8,7 @@ export default async function Sidebar({
   companyName: string;
   logoUrl: string | null;
 }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
