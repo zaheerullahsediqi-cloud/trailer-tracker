@@ -22,6 +22,9 @@ export default async function RentalDetailPage({ params }: { params: Promise<{ i
     .single();
 
   if (!rental) notFound();
+  const { data: canUndo } = rental.status === "completed"
+    ? await supabase.rpc("tracker_admin")
+    : { data: false };
 
   let contractUrl: string | null = null;
   if (rental.contract_url) {
@@ -104,7 +107,7 @@ export default async function RentalDetailPage({ params }: { params: Promise<{ i
             View trailer →
           </Link>
         </div>
-        <RentalControls rentalId={rental.id} status={rental.status} />
+        <RentalControls rentalId={rental.id} status={rental.status} canUndo={!!canUndo} />
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">

@@ -44,3 +44,7 @@ For an interrupted sending/review_required record, check the provider delivery l
 ## Deployment
 
 Apply migration 010 before deploying this code. Set all environment variables on Vercel, including a nonempty CRON_SECRET. Without it the reminder endpoint returns 401. Vercel runs the reminder at 13:00 UTC daily; provider failures return 500 instead of claiming success. No live migration, deployment, or email delivery is performed by local tests.
+
+## Undo completion
+
+See [UNDO-COMPLETION.md](UNDO-COMPLETION.md) for the administrator-only Undo completion button and optional correction notes, off by default.

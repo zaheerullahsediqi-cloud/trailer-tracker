@@ -49,3 +49,7 @@ Supabase remains the persistent database and document store. This is not an offl
 - Production dependency audit: zero known vulnerabilities at verification time.
 - Browser checks against a disposable local backend confirmed sign-in, 17-record import, 7/1/6/3 counts, exact plate search, edit/save, renter setup visibility, and insurance clearance preserving maintenance availability.
 - No live database data or email was used for these checks.
+
+## Optional-note Undo completion
+
+The new Undo completion feature is documented in [UNDO-COMPLETION.md](UNDO-COMPLETION.md). Its database migration was applied on October 25, 2026; commit and push the associated UI changes. Notes are off by default, and no extra history rows are created.

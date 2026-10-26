@@ -37,7 +37,7 @@ export default async function RootLayout({
   const { companyName, logoUrl } = await getCompanySettings(supabase);
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <ThemeScript />
       </head>
