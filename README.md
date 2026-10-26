@@ -48,3 +48,7 @@ Apply migration 010 before deploying this code. Set all environment variables on
 ## Undo completion
 
 See [UNDO-COMPLETION.md](UNDO-COMPLETION.md) for the administrator-only Undo completion button and optional correction notes, off by default.
+
+## Inventory PDF
+
+Open Trailers and click **Download inventory PDF** for a complete, current inventory report. See [INVENTORY-PDF.md](INVENTORY-PDF.md). No database migration is required.

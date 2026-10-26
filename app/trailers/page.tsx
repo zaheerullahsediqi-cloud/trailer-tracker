@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { loadBillingData } from "@/lib/billing-data";
 import TrailerList from "./trailer-list";
 import AddTrailerModal from "./add-trailer-modal";
+import InventoryPdfButton from "./inventory-pdf-button";
 
 
 export default async function TrailersPage({searchParams}:{searchParams:Promise<{category?:string}>}) {
@@ -47,7 +48,7 @@ export default async function TrailersPage({searchParams}:{searchParams:Promise<
           </p>
           <Link href="/history" className="text-accent underline text-sm">View previous trailers and rental history</Link>
         </div>
-        <div className="flex gap-2"><Link href="/trailers/import" className="btn-secondary">Review original inventory</Link><AddTrailerModal /></div>
+        <div className="flex flex-wrap gap-2"><InventoryPdfButton /><Link href="/trailers/import" className="btn-secondary">Review original inventory</Link><AddTrailerModal /></div>
       </div>
 
 
