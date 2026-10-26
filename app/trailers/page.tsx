@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { loadBillingData } from "@/lib/billing-data";
 import TrailerList from "./trailer-list";
@@ -42,13 +41,12 @@ export default async function TrailersPage({searchParams}:{searchParams:Promise<
     <div className="space-y-8">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="page-title text-[28px]">Trailers</h1>
+          <h1 className="page-title text-[28px]">Trailer inventory</h1>
           <p className="text-sm text-muted mt-1">
-            Manage your trailer fleet, track availability and monitor rentals in real time.
+            Your entire fleet, clearly organized.
           </p>
-          <Link href="/history" className="text-accent underline text-sm">View previous trailers and rental history</Link>
         </div>
-        <div className="flex flex-wrap gap-2"><InventoryPdfButton /><Link href="/trailers/import" className="btn-secondary">Review original inventory</Link><AddTrailerModal /></div>
+        <div className="flex flex-wrap gap-2"><InventoryPdfButton /><AddTrailerModal /></div>
       </div>
 
 

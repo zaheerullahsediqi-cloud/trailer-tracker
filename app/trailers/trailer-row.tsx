@@ -25,10 +25,10 @@ export default function TrailerRow({ trailer }: { trailer: any }) {
     <div className="card card-hover overflow-hidden">
       <div className="relative">
         {trailer.photoUrl ? (
-          <img src={trailer.photoUrl} alt={trailer.vin} className="w-full aspect-[4/3] object-cover" />
+          <img src={trailer.photoUrl} alt={trailer.vin} className="w-full aspect-[16/7] object-cover" />
         ) : (
-          <div className="aspect-[4/3] bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-            <Truck size={32} className="text-white/30" strokeWidth={1.5} />
+          <div className="aspect-[16/7] bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+            <Truck size={24} className="text-white/30" strokeWidth={1.5} />
           </div>
         )}
         <span className={`absolute top-3 right-3 ${displayStatusBadge}`}>{displayStatusLabel}</span>

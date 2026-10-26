@@ -144,3 +144,19 @@ html.dark .dtable td {
 .animate-in {
   @apply animate-slideUp;
 }
+
+/* Consistent, readable inventory presentation in both appearances. */
+.inventory-secondary { @apply block mt-1.5 text-xs text-slate-600 dark:text-slate-300; }
+.inventory-badge { @apply inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap; }
+.inventory-badge-mc { @apply bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200; }
+.inventory-badge-pending { @apply bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200; }
+.inventory-badge-rented { @apply bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-200; }
+.inventory-badge-sold { @apply bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200; }
+.inventory-menu-item { @apply block rounded-lg px-3 py-3 text-sm text-primary dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800; }
+.inventory-more summary::-webkit-details-marker { display: none; }
+.inventory-table td { @apply py-4; }
+html.dark .label, html.dark .text-muted { @apply text-slate-300; }
+html.dark .badge-success { @apply bg-emerald-950 text-emerald-200; }
+html.dark .badge-warning { @apply bg-amber-950 text-amber-200; }
+html.dark .badge-danger { @apply bg-red-950 text-red-200; }
+html.dark .badge-accent { @apply bg-blue-950 text-blue-200; }

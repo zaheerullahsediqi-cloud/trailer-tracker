@@ -1,8 +1,10 @@
 "use client";
 import { useState, useMemo } from "react";
 import TrailerRow from "./trailer-row";
+import InventoryTable, { categoryBadge } from "./inventory-table";
+import Link from "next/link";
 import { categoryLabels, inventoryCategory, displaySoldDate, type InventoryCategory } from "@/lib/inventory";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, List, LayoutGrid, ChevronDown } from "lucide-react";
 
 const STATUS_OPTIONS = [
   { key: "all", label: "All Statuses" },
@@ -27,6 +29,7 @@ export default function TrailerList({ trailers, initialCategory = "all" }: { tra
   const [trailerType, setTrailerType] = useState("all");
   const [sortBy, setSortBy] = useState("unit");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [view, setView] = useState<"table" | "cards">("table");
 
   const renters = useMemo(() => {
     const map = new Map<string, string>();
@@ -45,7 +48,7 @@ export default function TrailerList({ trailers, initialCategory = "all" }: { tra
   const filtered = useMemo(() => {
     let result = category === "all" ? trailers : trailers.filter(t => inventoryCategory(t) === category);
     if (search.trim()) {
-      const q = search.toLowerCase();
+      const q = search.trim().toLowerCase();
       result = result.filter(
         (t) =>
           [t.vin,t.unit_number,t.plate,t.make,t.model,t.year,t.inventory_renter_name,t.buyer_name,t.rental?.renters?.name].some(value => String(value ?? "").toLowerCase().includes(q))
@@ -57,14 +60,14 @@ export default function TrailerList({ trailers, initialCategory = "all" }: { tra
     if (trailerType !== "all") result = result.filter((t) => t.trailer_type === trailerType);
 
     const sorted = [...result];
-    if (sortBy === "unit") sorted.sort((a, b) => (a.unit_number || a.vin).localeCompare(b.unit_number || b.vin));
+    if (sortBy === "unit") sorted.sort((a, b) => (a.unit_number ? 0 : 1) - (b.unit_number ? 0 : 1) || (a.unit_number || a.vin).localeCompare(b.unit_number || b.vin, undefined, { numeric: true }));
     if (sortBy === "vin") sorted.sort((a, b) => a.vin.localeCompare(b.vin));
     if (sortBy === "last_service")
       sorted.sort((a, b) => (b.last_service_date || "").localeCompare(a.last_service_date || ""));
     return sorted;
   }, [trailers, category, search, status, renterId, trailerType, sortBy]);
 
-  const hasActiveFilters = category !== "all" || status !== "all" || renterId !== "all" || trailerType !== "all" || sortBy !== "unit";
+  const hasActiveFilters = !!search.trim() || category !== "all" || status !== "all" || renterId !== "all" || trailerType !== "all" || sortBy !== "unit";
 
   function clearFilters() {
     setCategory("all");
@@ -83,7 +86,7 @@ export default function TrailerList({ trailers, initialCategory = "all" }: { tra
   const filterControls = (
     <>
       <div>
-        <label className="label sm:hidden">Status</label>
+        <label className="label">Status</label>
         <select aria-label="Filter availability" value={status} onChange={(e) => setStatus(e.target.value)} className="input">
           {STATUS_OPTIONS.map((o) => (
             <option key={o.key} value={o.key}>
@@ -93,7 +96,7 @@ export default function TrailerList({ trailers, initialCategory = "all" }: { tra
         </select>
       </div>
       <div>
-        <label className="label sm:hidden">Current Renter</label>
+        <label className="label">Current Renter</label>
         <select aria-label="Filter renter" value={renterId} onChange={(e) => setRenterId(e.target.value)} className="input">
           <option value="all">All Renters</option>
           {renters.map(([id, name]) => (
@@ -104,7 +107,7 @@ export default function TrailerList({ trailers, initialCategory = "all" }: { tra
         </select>
       </div>
       <div>
-        <label className="label sm:hidden">Trailer Type</label>
+        <label className="label">Trailer Type</label>
         <select aria-label="Filter trailer type" value={trailerType} onChange={(e) => setTrailerType(e.target.value)} className="input">
           <option value="all">All Types</option>
           {types.map((t) => (
@@ -115,7 +118,7 @@ export default function TrailerList({ trailers, initialCategory = "all" }: { tra
         </select>
       </div>
       <div>
-        <label className="label sm:hidden">Sort By</label>
+        <label className="label">Sort By</label>
         <select aria-label="Sort inventory" value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="input">
           {SORT_OPTIONS.map((o) => (
             <option key={o.key} value={o.key}>
@@ -129,77 +132,45 @@ export default function TrailerList({ trailers, initialCategory = "all" }: { tra
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            aria-label="Search inventory" placeholder="Search VIN, plate, model, unit or name…"
-            className="input pl-8"
-          />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {(Object.entries(categoryLabels) as [InventoryCategory,string][]).map(([key,label]) => <button key={key} onClick={() => setCategory(category === key ? "all" : key)} aria-pressed={category === key} className={`card p-4 sm:p-5 text-left transition-shadow hover:shadow-md ${category === key ? "ring-2 ring-accent" : ""}`}><span className={`inventory-badge ${categoryBadge[key]}`}>{label}</span><span className="block text-3xl font-semibold mt-3 tabular-nums">{trailers.filter(t => inventoryCategory(t) === key).length}</span></button>)}
+      </div>
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search size={16} aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
+          <input value={search} onChange={e => setSearch(e.target.value)} aria-label="Search inventory" placeholder="Search VIN, plate, unit or name…" className="input !pl-9" />
         </div>
-        <button className="btn-secondary text-sm" onClick={exportInventory}>Export inventory</button>
-        <div className="hidden sm:flex gap-3">{filterControls}</div>
-        {hasActiveFilters && (
-          <button onClick={clearFilters} className="hidden sm:block text-sm text-accent font-medium whitespace-nowrap">
-            Clear Filters
-          </button>
-        )}
-        <button onClick={() => setSheetOpen(true)} className="btn-secondary text-sm sm:hidden">
-          <SlidersHorizontal size={14} />
-          Filters
-        </button>
+        <button onClick={() => setSheetOpen(!sheetOpen)} aria-expanded={sheetOpen} aria-controls="inventory-filters" className="btn-secondary"><SlidersHorizontal size={15} aria-hidden="true" />Filters</button>
+        <div className="flex gap-1" role="group" aria-label="Inventory view">
+          <button className={view === "table" ? "btn-primary" : "btn-secondary"} onClick={() => setView("table")} aria-pressed={view === "table"} aria-label="Table view"><List size={16} aria-hidden="true" /></button>
+          <button className={view === "cards" ? "btn-primary" : "btn-secondary"} onClick={() => setView("cards")} aria-pressed={view === "cards"} aria-label="Card view"><LayoutGrid size={16} aria-hidden="true" /></button>
+        </div>
+        <details className="relative inventory-more">
+          <summary className="btn-secondary list-none cursor-pointer">More options <ChevronDown size={14} aria-hidden="true" /></summary>
+          <div className="absolute right-0 top-full mt-2 z-20 w-64 card p-2 shadow-lg">
+            <Link href="/trailers/import" className="inventory-menu-item">Review original inventory</Link>
+            <Link href="/history" className="inventory-menu-item">Trailer and rental history</Link>
+            <button className="inventory-menu-item w-full text-left" onClick={exportInventory}>Export inventory data (JSON)</button>
+          </div>
+        </details>
+        {hasActiveFilters && <button onClick={clearFilters} className="btn-ghost text-accent dark:text-blue-300">Clear filters</button>}
       </div>
 
       {sheetOpen && (
-        <div className="sm:hidden fixed inset-0 z-40" onClick={() => setSheetOpen(false)}>
-          <div className="absolute inset-0 bg-black/40 animate-in" />
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="absolute bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-2xl pb-[env(safe-area-inset-bottom)] animate-in max-h-[80vh] overflow-y-auto"
-          >
-            <div className="flex items-center justify-between px-5 pt-4 pb-2">
-              <p className="font-bold text-primary dark:text-white">Filter trailers</p>
-              <button onClick={() => setSheetOpen(false)} className="p-1 text-muted">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="px-5 pb-6 space-y-3">
-              {filterControls}
-              <div className="flex gap-2 pt-2">
-                <button onClick={() => setSheetOpen(false)} className="btn-primary flex-1">
-                  Apply
-                </button>
-                {hasActiveFilters && (
-                  <button
-                    onClick={() => {
-                      clearFilters();
-                      setSheetOpen(false);
-                    }}
-                    className="btn-secondary flex-1"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
+        <div id="inventory-filters" className="card p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">{filterControls}</div>
         </div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {(Object.entries(categoryLabels) as [InventoryCategory,string][]).map(([key,label])=><button key={key} onClick={()=>setCategory(category===key?"all":key)} aria-pressed={category===key} className={`card p-4 text-left ${category===key?"ring-2 ring-accent":""}`}><span className="text-sm text-muted">{label}</span><span className="block text-3xl font-bold">{trailers.filter(t=>inventoryCategory(t)===key).length}</span></button>)}
-      </div>
       <p className="text-sm text-muted" role="status">Showing {filtered.length} of {trailers.length} trailers{category!=="all"?` · ${categoryLabels[category as InventoryCategory]}`:""}</p>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {view === "table" ? <InventoryTable trailers={filtered} /> : <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map((t: any) => (
           <TrailerRow key={t.id} trailer={t} />
         ))}
         {filtered.length === 0 && (
           <p className="text-muted text-sm sm:col-span-2 lg:col-span-3">No trailers match this filter.</p>
         )}
-      </div>
+      </div>}
     </div>
   );
 }
